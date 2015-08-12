@@ -1,4 +1,5 @@
 #include "knx.hpp"
+#include "util.hpp"
 
 extern "C" {
 	#include <knxclient/proto/cemi.h>
@@ -72,8 +73,9 @@ static
 void knxclient_init(Handle<Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
 
-	// Constants
+	// Modules
 	knxclient_register_knx_module(module);
+	knxclient_register_knx_util(module);
 
 	// Methods
 	module->Set(String::NewFromUtf8(isolate, "parseCEMI"),
