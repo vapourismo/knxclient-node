@@ -4,7 +4,7 @@
 			"target_name": "knxclient",
 			"sources": [
 				"lib/knxclient.cpp",
-				"lib/router.cpp"
+				"lib/knx.cpp"
 			],
 			"cflags": [
 				"-std=c++11"
