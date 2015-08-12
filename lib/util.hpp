@@ -19,6 +19,17 @@ void knxclient_object_register(
 	v8::Isolate* isolate,
 	v8::Handle<v8::Object>& module,
 	const char* name,
+	bool value
+) {
+	module->Set(v8::String::NewFromUtf8(isolate, name),
+	            v8::Boolean::New(isolate, value));
+}
+
+static inline
+void knxclient_object_register(
+	v8::Isolate* isolate,
+	v8::Handle<v8::Object>& module,
+	const char* name,
 	int32_t value
 ) {
 	module->Set(v8::String::NewFromUtf8(isolate, name),

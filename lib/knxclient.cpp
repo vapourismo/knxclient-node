@@ -11,6 +11,15 @@ extern "C" {
 using namespace v8;
 
 static
+Local<Object> knxclient_tpdu_to_object(Isolate* isolate, const knx_tpdu& tpdu) {
+	Local<Object> ret_object = Object::New(isolate);
+
+
+
+	return ret_object;
+}
+
+static
 void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
@@ -33,26 +42,20 @@ void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
 			// Payload
 			Local<Object> ldata_object = Object::New(isolate);
 
-			ldata_object->Set(String::NewFromUtf8(isolate, "priority"),
-			                  Integer::New(isolate, frame.payload.ldata.control1.priority));
-			ldata_object->Set(String::NewFromUtf8(isolate, "repeat"),
-			                  Boolean::New(isolate, frame.payload.ldata.control1.repeat));
-			ldata_object->Set(String::NewFromUtf8(isolate, "system_broadcast"),
-			                  Boolean::New(isolate, frame.payload.ldata.control1.system_broadcast));
-			ldata_object->Set(String::NewFromUtf8(isolate, "request_ack"),
-			                  Boolean::New(isolate, frame.payload.ldata.control1.request_ack));
-			ldata_object->Set(String::NewFromUtf8(isolate, "error"),
-			                  Boolean::New(isolate, frame.payload.ldata.control1.error));
+			knxclient_object_register(isolate, ldata_object, "priority", frame.payload.ldata.control1.priority);
+			knxclient_object_register(isolate, ldata_object, "repeat", frame.payload.ldata.control1.repeat);
+			knxclient_object_register(isolate, ldata_object, "system_broadcast", frame.payload.ldata.control1.system_broadcast);
+			knxclient_object_register(isolate, ldata_object, "request_ack", frame.payload.ldata.control1.request_ack);
+			knxclient_object_register(isolate, ldata_object, "error", frame.payload.ldata.control1.error);
 
-			ldata_object->Set(String::NewFromUtf8(isolate, "address_type"),
-			                  Integer::New(isolate, frame.payload.ldata.control2.address_type));
-			ldata_object->Set(String::NewFromUtf8(isolate, "hops"),
-			                  Integer::New(isolate, frame.payload.ldata.control2.hops));
+			knxclient_object_register(isolate, ldata_object, "address_type", frame.payload.ldata.control2.address_type);
+			knxclient_object_register(isolate, ldata_object, "hops", frame.payload.ldata.control2.hops);
 
-			ldata_object->Set(String::NewFromUtf8(isolate, "source"),
-			                  Integer::New(isolate, frame.payload.ldata.source));
-			ldata_object->Set(String::NewFromUtf8(isolate, "destination"),
-			                  Integer::New(isolate, frame.payload.ldata.destination));
+			knxclient_object_register(isolate, ldata_object, "source", frame.payload.ldata.source);
+			knxclient_object_register(isolate, ldata_object, "destination", frame.payload.ldata.destination);
+
+			ldata_object->Set(String::NewFromUtf8(isolate, "tpdu"),
+			                  knxclient_tpdu_to_object(isolate, frame.payload.ldata.tpdu));
 
 			frame_object->Set(String::NewFromUtf8(isolate, "payload"), ldata_object);
 
