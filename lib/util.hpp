@@ -36,4 +36,14 @@ void knxclient_object_register(
 	            v8::Integer::New(isolate, value));
 }
 
+template <typename T> static inline
+void knxclient_object_register(
+	v8::Isolate* isolate,
+	v8::Handle<v8::Object>& module,
+	const char* name,
+	v8::Handle<T> value
+) {
+	module->Set(v8::String::NewFromUtf8(isolate, name), value);
+}
+
 #endif
