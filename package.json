@@ -1,0 +1,12 @@
+{
+  "name": "knxclient",
+  "version": "0.0.0",
+  "description": "KNX client library",
+  "main": "build/Release/knxclient.node",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "author": "vapourismo",
+  "license": "GPL-3.0",
+  "gypfile": true
+}
