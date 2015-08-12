@@ -3,6 +3,6 @@
 
 #include <node.h>
 
-void knxclient_register_knx_constants(v8::Handle<v8::Object>& module);
+void knxclient_register_knx_module(v8::Handle<v8::Object>& module);
 
 #endif

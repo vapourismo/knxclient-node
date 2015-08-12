@@ -74,7 +74,7 @@ void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
 	}
 }
 
-void knxclient_register_knx_constants(Handle<Object>& module) {
+void knxclient_register_knx_module(Handle<Object>& module) {
 	Isolate* isolate = Isolate::GetCurrent();
 
 	// Constants

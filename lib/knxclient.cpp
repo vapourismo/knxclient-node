@@ -73,7 +73,7 @@ void knxclient_init(Handle<Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
 
 	// Constants
-	knxclient_register_knx_constants(module);
+	knxclient_register_knx_module(module);
 
 	// Methods
 	module->Set(String::NewFromUtf8(isolate, "parseCEMI"),
