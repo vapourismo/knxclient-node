@@ -78,36 +78,21 @@ void knxclient_register_knx_module(Handle<Object>& module) {
 	Isolate* isolate = Isolate::GetCurrent();
 
 	// Constants
-	module->Set(String::NewFromUtf8(isolate, "SearchRequest"),
-	            Integer::New(isolate, KNX_SEARCH_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "SearchResponse"),
-	            Integer::New(isolate, KNX_SEARCH_RESPONSE));
-	module->Set(String::NewFromUtf8(isolate, "DescriptionRequest"),
-	            Integer::New(isolate, KNX_DESCRIPTION_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "DescriptionResponse"),
-	            Integer::New(isolate, KNX_DESCRIPTION_RESPONSE));
-	module->Set(String::NewFromUtf8(isolate, "ConnectionRequest"),
-	            Integer::New(isolate, KNX_CONNECTION_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "ConnectionResponse"),
-	            Integer::New(isolate, KNX_CONNECTION_RESPONSE));
-	module->Set(String::NewFromUtf8(isolate, "ConnectionStateRequest"),
-	            Integer::New(isolate, KNX_CONNECTION_STATE_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "ConnectionStateResponse"),
-	            Integer::New(isolate, KNX_CONNECTION_STATE_RESPONSE));
-	module->Set(String::NewFromUtf8(isolate, "DisconnectRequest"),
-	            Integer::New(isolate, KNX_DISCONNECT_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "DisconnectResponse"),
-	            Integer::New(isolate, KNX_DISCONNECT_RESPONSE));
-	module->Set(String::NewFromUtf8(isolate, "DeviceConfigurationRequest"),
-	            Integer::New(isolate, KNX_DEVICE_CONFIGURATION_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "DeviceConfigurationAck"),
-	            Integer::New(isolate, KNX_DEVICE_CONFIGURATION_ACK));
-	module->Set(String::NewFromUtf8(isolate, "TunnelRequest"),
-	            Integer::New(isolate, KNX_TUNNEL_REQUEST));
-	module->Set(String::NewFromUtf8(isolate, "TunnelResponse"),
-	            Integer::New(isolate, KNX_TUNNEL_RESPONSE));
-	module->Set(String::NewFromUtf8(isolate, "RoutingIndication"),
-	            Integer::New(isolate, KNX_ROUTING_INDICATION));
+	knxclient_object_register(isolate, module, "SearchRequest",              KNX_SEARCH_REQUEST);
+	knxclient_object_register(isolate, module, "SearchResponse",             KNX_SEARCH_RESPONSE);
+	knxclient_object_register(isolate, module, "DescriptionRequest",         KNX_DESCRIPTION_REQUEST);
+	knxclient_object_register(isolate, module, "DescriptionResponse",        KNX_DESCRIPTION_RESPONSE);
+	knxclient_object_register(isolate, module, "ConnectionRequest",          KNX_CONNECTION_REQUEST);
+	knxclient_object_register(isolate, module, "ConnectionResponse",         KNX_CONNECTION_RESPONSE);
+	knxclient_object_register(isolate, module, "ConnectionStateRequest",     KNX_CONNECTION_STATE_REQUEST);
+	knxclient_object_register(isolate, module, "ConnectionStateResponse",    KNX_CONNECTION_STATE_RESPONSE);
+	knxclient_object_register(isolate, module, "DisconnectRequest",          KNX_DISCONNECT_REQUEST);
+	knxclient_object_register(isolate, module, "DisconnectResponse",         KNX_DISCONNECT_RESPONSE);
+	knxclient_object_register(isolate, module, "DeviceConfigurationRequest", KNX_DEVICE_CONFIGURATION_REQUEST);
+	knxclient_object_register(isolate, module, "DeviceConfigurationAck",     KNX_DEVICE_CONFIGURATION_ACK);
+	knxclient_object_register(isolate, module, "TunnelRequest",              KNX_TUNNEL_REQUEST);
+	knxclient_object_register(isolate, module, "TunnelResponse",             KNX_TUNNEL_RESPONSE);
+	knxclient_object_register(isolate, module, "RoutingIndication",          KNX_ROUTING_INDICATION);
 
 	// Methods
 	module->Set(String::NewFromUtf8(isolate, "parseKNX"),

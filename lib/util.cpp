@@ -39,8 +39,6 @@ void knxclient_register_knx_util(Handle<Object>& module) {
 	Isolate* isolate = Isolate::GetCurrent();
 
 	// Constants
-	module->Set(String::NewFromUtf8(isolate, "TCP"),
-	            Integer::New(isolate, KNX_PROTO_TCP));
-	module->Set(String::NewFromUtf8(isolate, "UDP"),
-	            Integer::New(isolate, KNX_PROTO_UDP));
+	knxclient_object_register(isolate, module, "TCP", KNX_PROTO_TCP);
+	knxclient_object_register(isolate, module, "UDP", KNX_PROTO_UDP);
 }
