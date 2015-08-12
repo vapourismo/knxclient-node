@@ -1,4 +1,5 @@
 #include "knx.hpp"
+#include "util.hpp"
 
 extern "C" {
 	#include <knxclient/proto/knxnetip.h>
@@ -8,18 +9,6 @@ extern "C" {
 #include <node_buffer.h>
 
 using namespace v8;
-
-static
-void data_free(char* data, void*) {
-	delete[] data;
-}
-
-static
-Local<Object> data_to_buffer(Isolate* isolate, const char* data, size_t length) {
-	char* data_copy = new char[length];
-	std::copy(data, data + length, data_copy);
-	return node::Buffer::New(isolate, data_copy, length, data_free, nullptr);
-}
 
 static
 Local<Value> knxclient_packet_to_object(Isolate* isolate, const knx_packet& ind) {
@@ -41,7 +30,7 @@ Local<Value> knxclient_packet_to_object(Isolate* isolate, const knx_packet& ind)
 			break;
 
 		case KNX_ROUTING_INDICATION:
-			return data_to_buffer(
+			return knxclient_data_to_buffer(
 				isolate,
 				(const char*) ind.payload.routing_ind.data,
 				ind.payload.routing_ind.size
