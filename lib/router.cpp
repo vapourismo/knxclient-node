@@ -109,7 +109,8 @@ RouterClientHandle* router_check(const FunctionCallbackInfo<Value>& args) {
 	return static_cast<RouterClientHandle*>(Handle<External>::Cast(field)->Value());
 }
 
-void knxclient_router_send(const FunctionCallbackInfo<Value>& args) {
+static
+void router_send(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
 	// Fetch internal field
@@ -271,6 +272,10 @@ void knxclient_router_send(const FunctionCallbackInfo<Value>& args) {
 	);
 }
 
+static
+void router_listen(const FunctionCallbackInfo<Value>& args) {
+
+}
 
 void knxclient_init_router(v8::Handle<v8::Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
@@ -281,6 +286,9 @@ void knxclient_init_router(v8::Handle<v8::Object> module) {
 	ctor->InstanceTemplate()->SetInternalFieldCount(1);
 
 	module->Set(String::NewFromUtf8(isolate, "Router"), ctor->GetFunction());
+
+	// Methods
+	NODE_SET_PROTOTYPE_METHOD(ctor, "send", router_send);
 
 	// Special values
 	module->Set(String::NewFromUtf8(isolate, "BooleanType"),
