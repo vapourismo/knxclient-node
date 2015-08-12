@@ -3,6 +3,6 @@
 
 #include <node.h>
 
-void knxclient_node_init_router(v8::Handle<v8::Object> module);
+void knxclient_init_router(v8::Handle<v8::Object> module);
 
 #endif
