@@ -12,25 +12,25 @@ using namespace v8;
 
 static
 Local<Object> knxclient_tpdu_to_object(Isolate* isolate, const knx_tpdu& tpdu) {
-	Local<Object> ret_object = Object::New(isolate);
+	ObjectBuilder builder(isolate);
 
-	knxclient_object_register(isolate, ret_object, "tpci", tpdu.tpci);
-	knxclient_object_register(isolate, ret_object, "seq_number", tpdu.seq_number);
+	builder.set("tpci", tpdu.tpci);
+	builder.set("seq_number", tpdu.seq_number);
 
 	switch (tpdu.tpci) {
 		case KNX_TPCI_UNNUMBERED_DATA:
 		case KNX_TPCI_NUMBERED_DATA:
-			knxclient_object_register(isolate, ret_object, "apci", tpdu.info.data.apci);
-			knxclient_object_register(isolate, ret_object, "payload", knxclient_data_to_buffer(isolate, (const char*) tpdu.info.data.payload, tpdu.info.data.length));
+			builder.set("apci", tpdu.info.data.apci);
+			builder.set("payload", knxclient_data_to_buffer(isolate, (const char*) tpdu.info.data.payload, tpdu.info.data.length));
 			break;
 
 		case KNX_TPCI_UNNUMBERED_CONTROL:
 		case KNX_TPCI_NUMBERED_CONTROL:
-			knxclient_object_register(isolate, ret_object, "control", tpdu.info.control);
+			builder.set("control", tpdu.info.control);
 			break;
 	}
 
-	return ret_object;
+	return builder;
 }
 
 static
@@ -47,28 +47,26 @@ void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
 		// Parse CEMI
 		knx_cemi_frame frame;
 		if (knx_cemi_parse(data, len, &frame)) {
-			Local<Object> frame_object = Object::New(isolate);
 
-			// Header
-			knxclient_object_register(isolate, frame_object, "service", frame.service);
+			// L_Data payload
+			ObjectBuilder ldata_builder(isolate);
+			ldata_builder.set("priority", frame.payload.ldata.control1.priority);
+			ldata_builder.set("repeat", frame.payload.ldata.control1.repeat);
+			ldata_builder.set("system_broadcast", frame.payload.ldata.control1.system_broadcast);
+			ldata_builder.set("request_ack", frame.payload.ldata.control1.request_ack);
+			ldata_builder.set("error", frame.payload.ldata.control1.error);
+			ldata_builder.set("address_type", frame.payload.ldata.control2.address_type);
+			ldata_builder.set("hops", frame.payload.ldata.control2.hops);
+			ldata_builder.set("source", frame.payload.ldata.source);
+			ldata_builder.set("destination", frame.payload.ldata.destination);
+			ldata_builder.set("tpdu", knxclient_tpdu_to_object(isolate, frame.payload.ldata.tpdu));
 
-			// Payload
-			Local<Object> ldata_object = Object::New(isolate);
+			// Frame
+			ObjectBuilder builder(isolate);
+			builder.set("service", frame.service);
+			builder.set("payload", ldata_builder);
 
-			knxclient_object_register(isolate, ldata_object, "priority", frame.payload.ldata.control1.priority);
-			knxclient_object_register(isolate, ldata_object, "repeat", frame.payload.ldata.control1.repeat);
-			knxclient_object_register(isolate, ldata_object, "system_broadcast", frame.payload.ldata.control1.system_broadcast);
-			knxclient_object_register(isolate, ldata_object, "request_ack", frame.payload.ldata.control1.request_ack);
-			knxclient_object_register(isolate, ldata_object, "error", frame.payload.ldata.control1.error);
-			knxclient_object_register(isolate, ldata_object, "address_type", frame.payload.ldata.control2.address_type);
-			knxclient_object_register(isolate, ldata_object, "hops", frame.payload.ldata.control2.hops);
-			knxclient_object_register(isolate, ldata_object, "source", frame.payload.ldata.source);
-			knxclient_object_register(isolate, ldata_object, "destination", frame.payload.ldata.destination);
-			knxclient_object_register(isolate, ldata_object, "tpdu", knxclient_tpdu_to_object(isolate, frame.payload.ldata.tpdu));
-
-			knxclient_object_register(isolate, frame_object, "payload", ldata_object);
-
-			args.GetReturnValue().Set(frame_object);
+			args.GetReturnValue().Set(builder);
 		} else {
 			args.GetReturnValue().SetNull();
 		}
@@ -84,14 +82,14 @@ void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
 static
 void knxclient_init(Handle<Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
+	ObjectBuilder builder(isolate, module);
 
 	// Modules
 	knxclient_register_knx_module(module);
 	knxclient_register_knx_util(module);
 
 	// Methods
-	module->Set(String::NewFromUtf8(isolate, "parseCEMI"),
-	            Function::New(isolate, knxclient_parse_cemi));
+	builder.set("parseCEMI", knxclient_parse_cemi);
 }
 
 NODE_MODULE(knxclient, knxclient_init)

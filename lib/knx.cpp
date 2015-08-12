@@ -76,25 +76,25 @@ void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
 
 void knxclient_register_knx_module(Handle<Object>& module) {
 	Isolate* isolate = Isolate::GetCurrent();
+	ObjectBuilder builder(isolate, module);
 
 	// Constants
-	knxclient_object_register(isolate, module, "SearchRequest",              KNX_SEARCH_REQUEST);
-	knxclient_object_register(isolate, module, "SearchResponse",             KNX_SEARCH_RESPONSE);
-	knxclient_object_register(isolate, module, "DescriptionRequest",         KNX_DESCRIPTION_REQUEST);
-	knxclient_object_register(isolate, module, "DescriptionResponse",        KNX_DESCRIPTION_RESPONSE);
-	knxclient_object_register(isolate, module, "ConnectionRequest",          KNX_CONNECTION_REQUEST);
-	knxclient_object_register(isolate, module, "ConnectionResponse",         KNX_CONNECTION_RESPONSE);
-	knxclient_object_register(isolate, module, "ConnectionStateRequest",     KNX_CONNECTION_STATE_REQUEST);
-	knxclient_object_register(isolate, module, "ConnectionStateResponse",    KNX_CONNECTION_STATE_RESPONSE);
-	knxclient_object_register(isolate, module, "DisconnectRequest",          KNX_DISCONNECT_REQUEST);
-	knxclient_object_register(isolate, module, "DisconnectResponse",         KNX_DISCONNECT_RESPONSE);
-	knxclient_object_register(isolate, module, "DeviceConfigurationRequest", KNX_DEVICE_CONFIGURATION_REQUEST);
-	knxclient_object_register(isolate, module, "DeviceConfigurationAck",     KNX_DEVICE_CONFIGURATION_ACK);
-	knxclient_object_register(isolate, module, "TunnelRequest",              KNX_TUNNEL_REQUEST);
-	knxclient_object_register(isolate, module, "TunnelResponse",             KNX_TUNNEL_RESPONSE);
-	knxclient_object_register(isolate, module, "RoutingIndication",          KNX_ROUTING_INDICATION);
+	builder.set("SearchRequest",              KNX_SEARCH_REQUEST);
+	builder.set("SearchResponse",             KNX_SEARCH_RESPONSE);
+	builder.set("DescriptionRequest",         KNX_DESCRIPTION_REQUEST);
+	builder.set("DescriptionResponse",        KNX_DESCRIPTION_RESPONSE);
+	builder.set("ConnectionRequest",          KNX_CONNECTION_REQUEST);
+	builder.set("ConnectionResponse",         KNX_CONNECTION_RESPONSE);
+	builder.set("ConnectionStateRequest",     KNX_CONNECTION_STATE_REQUEST);
+	builder.set("ConnectionStateResponse",    KNX_CONNECTION_STATE_RESPONSE);
+	builder.set("DisconnectRequest",          KNX_DISCONNECT_REQUEST);
+	builder.set("DisconnectResponse",         KNX_DISCONNECT_RESPONSE);
+	builder.set("DeviceConfigurationRequest", KNX_DEVICE_CONFIGURATION_REQUEST);
+	builder.set("DeviceConfigurationAck",     KNX_DEVICE_CONFIGURATION_ACK);
+	builder.set("TunnelRequest",              KNX_TUNNEL_REQUEST);
+	builder.set("TunnelResponse",             KNX_TUNNEL_RESPONSE);
+	builder.set("RoutingIndication",          KNX_ROUTING_INDICATION);
 
 	// Methods
-	module->Set(String::NewFromUtf8(isolate, "parseKNX"),
-	            Function::New(isolate, knxclient_parse_knx));
+	builder.set("parseKNX", knxclient_parse_knx);
 }

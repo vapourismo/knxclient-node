@@ -14,36 +14,45 @@ v8::Local<v8::Object> knxclient_host_info_to_object(v8::Isolate* isolate, const 
 
 void knxclient_register_knx_util(v8::Handle<v8::Object>& module);
 
-static inline
-void knxclient_object_register(
-	v8::Isolate* isolate,
-	v8::Handle<v8::Object>& module,
-	const char* name,
-	bool value
-) {
-	module->Set(v8::String::NewFromUtf8(isolate, name),
-	            v8::Boolean::New(isolate, value));
-}
+struct ObjectBuilder: v8::Local<v8::Object> {
+	v8::Isolate* isolate;
 
-static inline
-void knxclient_object_register(
-	v8::Isolate* isolate,
-	v8::Handle<v8::Object>& module,
-	const char* name,
-	int32_t value
-) {
-	module->Set(v8::String::NewFromUtf8(isolate, name),
-	            v8::Integer::New(isolate, value));
-}
+	inline
+	ObjectBuilder(v8::Isolate* isolate):
+		v8::Local<v8::Object>(v8::Object::New(isolate)),
+		isolate(isolate)
+	{}
 
-template <typename T> static inline
-void knxclient_object_register(
-	v8::Isolate* isolate,
-	v8::Handle<v8::Object>& module,
-	const char* name,
-	v8::Handle<T> value
-) {
-	module->Set(v8::String::NewFromUtf8(isolate, name), value);
-}
+	inline
+	ObjectBuilder(v8::Isolate* isolate, const v8::Handle<v8::Object>& rhs):
+		v8::Local<v8::Object>(rhs),
+		isolate(isolate)
+	{}
+
+	inline
+	void set(const char* name, int32_t value) {
+		set(name, v8::Integer::New(isolate, value));
+	}
+
+	inline
+	void set(const char* name, bool value) {
+		set(name, v8::Boolean::New(isolate, value));
+	}
+
+	inline
+	void set(const char* name, const char* value) {
+		set(name, v8::String::NewFromUtf8(isolate, value));
+	}
+
+	inline
+	void set(const char* name, v8::FunctionCallback value) {
+		set(name, v8::Function::New(isolate, value));
+	}
+
+	template <typename T> inline
+	void set(const char* name, const Handle<T>& value) {
+		(*this)->Set(v8::String::NewFromUtf8(isolate, name), value);
+	}
+};
 
 #endif

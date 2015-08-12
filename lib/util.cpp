@@ -18,27 +18,24 @@ Local<Object> knxclient_data_to_buffer(Isolate* isolate, const char* data, size_
 }
 
 Local<Object> knxclient_host_info_to_object(Isolate* isolate, const knx_host_info& info) {
-	Local<Object> ret_object = Object::New(isolate);
+	ObjectBuilder builder(isolate);
 
-	ret_object->Set(String::NewFromUtf8(isolate, "protocol"),
-	                Integer::New(isolate, info.protocol));
+	builder.set("protocol", info.protocol);
+	builder.set("port", info.port);
 
 	char address_str[INET_ADDRSTRLEN];
 	if (inet_ntop(AF_INET, &info.address, address_str, INET_ADDRSTRLEN)) {
-		ret_object->Set(String::NewFromUtf8(isolate, "address"),
-		                String::NewFromUtf8(isolate, address_str));
+		builder.set("address", address_str);
 	}
 
-	ret_object->Set(String::NewFromUtf8(isolate, "port"),
-	                Integer::New(isolate, info.port));
-
-	return ret_object;
+	return builder;
 }
 
 void knxclient_register_knx_util(Handle<Object>& module) {
 	Isolate* isolate = Isolate::GetCurrent();
+	ObjectBuilder builder(isolate, module);
 
 	// Constants
-	knxclient_object_register(isolate, module, "TCP", KNX_PROTO_TCP);
-	knxclient_object_register(isolate, module, "UDP", KNX_PROTO_UDP);
+	builder.set("TCP", KNX_PROTO_TCP);
+	builder.set("UDP", KNX_PROTO_UDP);
 }
