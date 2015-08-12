@@ -1,18 +1,7 @@
 #ifndef KNXCLIENT_NODE_UTIL_H_
 #define KNXCLIENT_NODE_UTIL_H_
 
-extern "C" {
-	#include <knxclient/proto/hostinfo.h>
-}
-
 #include <node.h>
-
-v8::Local<v8::Object> knxclient_data_to_buffer(v8::Isolate* isolate, const char* data, size_t length);
-
-// TODO: Test 'knxclient_host_info_to_object'
-v8::Local<v8::Object> knxclient_host_info_to_object(v8::Isolate* isolate, const knx_host_info& info);
-
-void knxclient_register_knx_util(v8::Handle<v8::Object>& module);
 
 struct ObjectBuilder: v8::Local<v8::Object> {
 	v8::Isolate* isolate;
@@ -53,6 +42,9 @@ struct ObjectBuilder: v8::Local<v8::Object> {
 	void set(const char* name, const Handle<T>& value) {
 		(*this)->Set(v8::String::NewFromUtf8(isolate, name), value);
 	}
+
+	static
+	v8::Local<v8::Object> fromData(v8::Isolate* isolate, const char* data, size_t length);
 };
 
 #endif
