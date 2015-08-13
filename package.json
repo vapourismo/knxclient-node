@@ -2,7 +2,7 @@
   "name": "knxclient",
   "version": "0.0.0",
   "description": "KNX client library",
-  "main": "build/Release/knxclient.node",
+  "main": "src/knxclient.js",
   "scripts": {
     "install": "node-gyp rebuild"
   },

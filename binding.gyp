@@ -3,7 +3,7 @@
 		{
 			"target_name": "knxclient_proto",
 			"sources": [
-				"lib/knxclient.cpp",
+				"lib/proto.cpp",
 				"lib/util.cpp"
 			],
 			"cflags": [
