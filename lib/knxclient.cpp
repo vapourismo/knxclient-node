@@ -75,7 +75,6 @@ void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
 	}
 }
 
-
 static
 Local<Object> knxclient_tpdu_to_object(Isolate* isolate, const knx_tpdu& tpdu) {
 	ObjectBuilder builder(isolate);
@@ -100,6 +99,24 @@ Local<Object> knxclient_tpdu_to_object(Isolate* isolate, const knx_tpdu& tpdu) {
 }
 
 static
+Local<Object> knxclient_ldata_to_object(Isolate* isolate, const knx_ldata& ldata) {
+	ObjectBuilder builder(isolate);
+
+	builder.set("priority",         ldata.control1.priority);
+	builder.set("repeat",           ldata.control1.repeat);
+	builder.set("system_broadcast", ldata.control1.system_broadcast);
+	builder.set("request_ack",      ldata.control1.request_ack);
+	builder.set("error",            ldata.control1.error);
+	builder.set("address_type",     ldata.control2.address_type);
+	builder.set("hops",             ldata.control2.hops);
+	builder.set("source",           ldata.source);
+	builder.set("destination",      ldata.destination);
+	builder.set("tpdu",             knxclient_tpdu_to_object(isolate, ldata.tpdu));
+
+	return builder;
+}
+
+static
 void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
@@ -113,23 +130,10 @@ void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
 		// Parse CEMI
 		knx_cemi_frame frame;
 		if (knx_cemi_parse(data, len, &frame)) {
-			// L_Data payload
-			ObjectBuilder ldata_builder(isolate);
-			ldata_builder.set("priority", frame.payload.ldata.control1.priority);
-			ldata_builder.set("repeat", frame.payload.ldata.control1.repeat);
-			ldata_builder.set("system_broadcast", frame.payload.ldata.control1.system_broadcast);
-			ldata_builder.set("request_ack", frame.payload.ldata.control1.request_ack);
-			ldata_builder.set("error", frame.payload.ldata.control1.error);
-			ldata_builder.set("address_type", frame.payload.ldata.control2.address_type);
-			ldata_builder.set("hops", frame.payload.ldata.control2.hops);
-			ldata_builder.set("source", frame.payload.ldata.source);
-			ldata_builder.set("destination", frame.payload.ldata.destination);
-			ldata_builder.set("tpdu", knxclient_tpdu_to_object(isolate, frame.payload.ldata.tpdu));
-
 			// Frame
 			ObjectBuilder builder(isolate);
 			builder.set("service", frame.service);
-			builder.set("payload", ldata_builder);
+			builder.set("payload", knxclient_ldata_to_object(isolate, frame.payload.ldata));
 
 			args.GetReturnValue().Set(builder);
 		} else {
@@ -353,6 +357,49 @@ void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 }
 
 static
+void knxclient_extract_ldata(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = args.GetIsolate();
+
+	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
+		Handle<Value> buf = args[0];
+
+		// Extract buffer details
+		const uint8_t* data = (const uint8_t*) node::Buffer::Data(buf);
+		size_t len = node::Buffer::Length(buf);
+
+		knx_packet frame;
+
+		if (knx_parse(data, len, &frame)) {
+			bool worked = false;
+			knx_cemi_frame cemi;
+
+			if (frame.service == KNX_ROUTING_INDICATION) {
+				worked = knx_cemi_parse((const uint8_t*) frame.payload.routing_ind.data,
+				                        frame.payload.routing_ind.size,
+				                        &cemi);
+			} else if (frame.service == KNX_TUNNEL_REQUEST) {
+				worked = knx_cemi_parse((const uint8_t*) frame.payload.tunnel_req.data,
+				                        frame.payload.tunnel_req.size,
+				                        &cemi);
+			}
+
+			if (worked && (cemi.service == KNX_CEMI_LDATA_REQ || cemi.service == KNX_CEMI_LDATA_IND)) {
+				args.GetReturnValue().Set(knxclient_ldata_to_object(isolate, cemi.payload.ldata));
+				return;
+			}
+		}
+
+		args.GetReturnValue().SetNull();
+	} else {
+		isolate->ThrowException(
+			Exception::TypeError(
+				String::NewFromUtf8(isolate, "Invalid argument types")
+			)
+		);
+	}
+}
+
+static
 void knxclient_init(Handle<Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
 	ObjectBuilder builder(isolate, module);
@@ -426,6 +473,7 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("parseKNX",                   knxclient_parse_knx);
 	builder.set("parseCEMI",                  knxclient_parse_cemi);
 	builder.set("parseAPDU",                  knxclient_parse_apdu);
+	builder.set("extractLData",               knxclient_extract_ldata);
 }
 
 NODE_MODULE(knxclient, knxclient_init)
