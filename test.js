@@ -1,4 +1,4 @@
-var knxclient = require("./build/Release/knxclient");
+var knxclient = require("./build/Release/knxclient_proto");
 var dgram = require("dgram");
 
 function formatGroupAddress(addr) {

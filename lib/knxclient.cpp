@@ -486,4 +486,4 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("extractLData",               knxclient_extract_ldata);
 }
 
-NODE_MODULE(knxclient, knxclient_init)
+NODE_MODULE(knxclient_proto, knxclient_init)
