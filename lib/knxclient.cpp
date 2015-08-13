@@ -374,6 +374,11 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("TunnelResponse",             KNX_TUNNEL_RESPONSE);
 	builder.set("RoutingIndication",          KNX_ROUTING_INDICATION);
 
+	// CEMI constants
+	builder.set("LDataReq",                   KNX_CEMI_LDATA_REQ);
+	builder.set("LDataInd",                   KNX_CEMI_LDATA_IND);
+	builder.set("LDataCon",                   KNX_CEMI_LDATA_CON);
+
 	// TPCI constants
 	builder.set("UnnumberedData",             KNX_TPCI_UNNUMBERED_DATA);
 	builder.set("NumberedData",               KNX_TPCI_NUMBERED_DATA);
@@ -402,9 +407,25 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("Restart",                    KNX_APCI_RESTART);
 	builder.set("Escape",                     KNX_APCI_ESCAPE);
 
+	builder.set("Bool",                       KNX_DPT_BOOL);
+	builder.set("ControlValue",               KNX_DPT_CVALUE);
+	builder.set("ControlStep",                KNX_DPT_CSTEP);
+	builder.set("Char",                       KNX_DPT_CHAR);
+	builder.set("Unsigned8",                  KNX_DPT_UNSIGNED8);
+	builder.set("Signed8",                    KNX_DPT_SIGNED8);
+	builder.set("Unsigned16",                 KNX_DPT_UNSIGNED16);
+	builder.set("Signed16",                   KNX_DPT_SIGNED16);
+	builder.set("Float16",                    KNX_DPT_FLOAT16);
+	builder.set("TimeOfDay",                  KNX_DPT_TIMEOFDAY);
+	builder.set("Date",                       KNX_DPT_DATE);
+	builder.set("Unsigned32",                 KNX_DPT_UNSIGNED32);
+	builder.set("Signed32",                   KNX_DPT_SIGNED32);
+	builder.set("Float32",                    KNX_DPT_FLOAT32);
+
 	// Methods
-	builder.set("parseCEMI", knxclient_parse_cemi);
-	builder.set("parseKNX", knxclient_parse_knx);
+	builder.set("parseKNX",                   knxclient_parse_knx);
+	builder.set("parseCEMI",                  knxclient_parse_cemi);
+	builder.set("parseAPDU",                  knxclient_parse_apdu);
 }
 
 NODE_MODULE(knxclient, knxclient_init)
