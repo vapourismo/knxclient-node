@@ -426,6 +426,15 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("LDataInd",                   KNX_CEMI_LDATA_IND);
 	builder.set("LDataCon",                   KNX_CEMI_LDATA_CON);
 
+	// LData constants
+	builder.set("IndividualAddress",          KNX_LDATA_ADDR_INDIVIDUAL);
+	builder.set("GroupAddress",               KNX_LDATA_ADDR_GROUP);
+
+	builder.set("SystemPriority",             KNX_LDATA_PRIO_SYSTEM);
+	builder.set("NormalPriority",             KNX_LDATA_PRIO_NORMAL);
+	builder.set("UrgentPriority",             KNX_LDATA_PRIO_URGENT);
+	builder.set("LowPriority",                KNX_LDATA_PRIO_LOW);
+
 	// TPCI constants
 	builder.set("UnnumberedData",             KNX_TPCI_UNNUMBERED_DATA);
 	builder.set("NumberedData",               KNX_TPCI_NUMBERED_DATA);
@@ -454,6 +463,7 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("Restart",                    KNX_APCI_RESTART);
 	builder.set("Escape",                     KNX_APCI_ESCAPE);
 
+	// Data constants
 	builder.set("Bool",                       KNX_DPT_BOOL);
 	builder.set("ControlValue",               KNX_DPT_CVALUE);
 	builder.set("ControlStep",                KNX_DPT_CSTEP);
