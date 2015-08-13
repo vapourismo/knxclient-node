@@ -24,6 +24,11 @@ struct ObjectBuilder: v8::Local<v8::Object> {
 	}
 
 	inline
+	void set(const char* name, uint32_t value) {
+		set(name, v8::Integer::NewFromUnsigned(isolate, value));
+	}
+
+	inline
 	void set(const char* name, bool value) {
 		set(name, v8::Boolean::New(isolate, value));
 	}
