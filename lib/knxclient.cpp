@@ -102,16 +102,16 @@ static
 Local<Object> knxclient_ldata_to_object(Isolate* isolate, const knx_ldata& ldata) {
 	ObjectBuilder builder(isolate);
 
-	builder.set("priority",         ldata.control1.priority);
-	builder.set("repeat",           ldata.control1.repeat);
-	builder.set("system_broadcast", ldata.control1.system_broadcast);
-	builder.set("request_ack",      ldata.control1.request_ack);
-	builder.set("error",            ldata.control1.error);
-	builder.set("address_type",     ldata.control2.address_type);
-	builder.set("hops",             ldata.control2.hops);
-	builder.set("source",           ldata.source);
-	builder.set("destination",      ldata.destination);
-	builder.set("tpdu",             knxclient_tpdu_to_object(isolate, ldata.tpdu));
+	builder.set("priority",        ldata.control1.priority);
+	builder.set("repeat",          ldata.control1.repeat);
+	builder.set("systemBroadcast", ldata.control1.system_broadcast);
+	builder.set("requestAck",      ldata.control1.request_ack);
+	builder.set("error",           ldata.control1.error);
+	builder.set("addressType",     ldata.control2.address_type);
+	builder.set("hops",            ldata.control2.hops);
+	builder.set("source",          ldata.source);
+	builder.set("destination",     ldata.destination);
+	builder.set("tpdu",            knxclient_tpdu_to_object(isolate, ldata.tpdu));
 
 	return builder;
 }
