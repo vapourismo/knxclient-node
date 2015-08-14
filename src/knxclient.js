@@ -3,6 +3,22 @@ var dgram = require("dgram");
 // TODO: Use 'bindings' package
 var proto = require("../build/Release/knxclient_proto");
 
+function formatGroupAddress(addr) {
+	var a = (addr >> 11) & 15;
+	var b = (addr >> 8) & 7
+	var c = addr & 255;
+
+	return a + "/" + b + "/" + c;
+}
+
+function formatIndividualAddress(addr) {
+	var a = (addr >> 12) & 15;
+	var b = (addr >> 8) & 15
+	var c = addr & 255;
+
+	return a + "." + b + "." + c;
+}
+
 function LData() {}
 
 LData.prototype = {
@@ -55,22 +71,6 @@ RouterClient.prototype = {
 		});
 	}
 };
-
-function formatGroupAddress(addr) {
-	var a = (addr >> 11) & 15;
-	var b = (addr >> 8) & 7
-	var c = addr & 255;
-
-	return a + "/" + b + "/" + c;
-}
-
-function formatIndividualAddress(addr) {
-	var a = (addr >> 12) & 15;
-	var b = (addr >> 8) & 15
-	var c = addr & 255;
-
-	return a + "." + b + "." + c;
-}
 
 module.exports = {
 	LData: LData,
