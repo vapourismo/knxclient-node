@@ -49,11 +49,16 @@ LData.prototype = {
 	}
 };
 
-function RouterClient() {
+function RouterClient(host, port) {
+	if (host != null && port == null && typeof(host) == "number") {
+		port = host;
+		host = null;
+	}
+
 	var sock = dgram.createSocket("udp4");
 
-	sock.bind(3671, function() {
-		this.addMembership("224.0.23.12");
+	sock.bind(port || 3671, function() {
+		this.addMembership(host || "224.0.23.12");
 		this.setMulticastLoopback(false);
 	});
 
