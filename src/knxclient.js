@@ -67,11 +67,12 @@ function RouterClient(host, port) {
 
 RouterClient.prototype = {
 	listen: function(fn) {
-		this.sock.on("message", this.onMessage);
+		this.sock.on("message", this.onMessage.bind(this, fn || function() {}));
 	},
 
-	onMessage: function(packet, sender) {
+	onMessage: function(fn, packet, sender) {
 		var ldata = proto.extractLData(packet);
+
 		if (ldata) {
 			ldata.__proto__ = LData.prototype;
 			fn.call(this, sender, ldata);
@@ -79,22 +80,50 @@ RouterClient.prototype = {
 	}
 };
 
-function TunnelClient(host, port) {
-	port = port || 3671;
+function TunnelClient(host, port, connectionHandler) {
+	if (port != null) {
+		if (typeof(port) == "function") {
+			connectionHandler = port;
+			port = 3671;
+		}
+	}
 
 	var sock = dgram.createSocket("udp4");
-	sock.on("message", this.onMessage);
+	sock.on("message", this.onMessageConnecting.bind(this));
 
 	var req = proto.makeConnectionRequest();
 	sock.send(req, 0, req.length, port, host);
 
+	this.onConnect = connectionHandler || function() {};
 	this.sock = sock;
 }
 
 TunnelClient.prototype = {
+	onMessageConnecting: function(packet, sender) {
+		var knx = proto.parseKNX(packet);
+
+		if (knx && knx.service == proto.ConnectionResponse) {
+			if (knx.status == 0) {
+				this.channel = knx.channel;
+				this.sock.on("message", this.onMessage.bind(this));
+
+				this.onConnect();
+			} else {
+				this.sock.close();
+			}
+		}
+	},
+
 	onMessage: function(packet, sender) {
 		var knx = proto.parseKNX(packet);
-		console.log(knx);
+
+		if (knx) {
+			if (knx.service == proto.DisconnectRequest) {
+				if (knx.channel == this.channel) {
+
+				}
+			}
+		}
 	}
 };
 
