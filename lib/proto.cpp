@@ -12,6 +12,9 @@ using namespace v8;
 
 static
 Local<Value> knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
+	ObjectBuilder builder(isolate);
+	builder.set("service", ind.service);
+
 	switch (ind.service) {
 		case KNX_SEARCH_REQUEST:
 		case KNX_SEARCH_RESPONSE:
@@ -26,19 +29,35 @@ Local<Value> knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
 		case KNX_DEVICE_CONFIGURATION_REQUEST:
 		case KNX_DEVICE_CONFIGURATION_ACK:
 		case KNX_TUNNEL_REQUEST:
-		case KNX_TUNNEL_RESPONSE:
 			// TODO: Implement me
 			break;
 
-		case KNX_ROUTING_INDICATION:
-			return ObjectBuilder::fromData(
+		case KNX_TUNNEL_RESPONSE: {
+			auto buf = ObjectBuilder::fromData(
+				isolate,
+				(const char*) ind.payload.tunnel_req.data,
+				ind.payload.tunnel_req.size
+			);
+
+			builder.set("payload", buf);
+
+			break;
+		}
+
+		case KNX_ROUTING_INDICATION: {
+			auto buf = ObjectBuilder::fromData(
 				isolate,
 				(const char*) ind.payload.routing_ind.data,
 				ind.payload.routing_ind.size
 			);
+
+			builder.set("payload", buf);
+
+			break;
+		}
 	}
 
-	return Object::New(isolate);
+	return builder;
 }
 
 static
@@ -116,37 +135,37 @@ Local<Object> knxclient_ldata_to_object(Isolate* isolate, const knx_ldata& ldata
 	return builder;
 }
 
-static
-void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
-	Isolate* isolate = args.GetIsolate();
+// static
+// void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
+// 	Isolate* isolate = args.GetIsolate();
 
-	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
-		Handle<Value> value = args[0];
+// 	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
+// 		Handle<Value> value = args[0];
 
-		// Extract buffer details
-		const uint8_t* data = (const uint8_t*) node::Buffer::Data(value);
-		size_t len = node::Buffer::Length(value);
+// 		// Extract buffer details
+// 		const uint8_t* data = (const uint8_t*) node::Buffer::Data(value);
+// 		size_t len = node::Buffer::Length(value);
 
-		// Parse CEMI
-		knx_cemi_frame frame;
-		if (knx_cemi_parse(data, len, &frame)) {
-			// Frame
-			ObjectBuilder builder(isolate);
-			builder.set("service", frame.service);
-			builder.set("payload", knxclient_ldata_to_object(isolate, frame.payload.ldata));
+// 		// Parse CEMI
+// 		knx_cemi_frame frame;
+// 		if (knx_cemi_parse(data, len, &frame)) {
+// 			// Frame
+// 			ObjectBuilder builder(isolate);
+// 			builder.set("service", frame.service);
+// 			builder.set("payload", knxclient_ldata_to_object(isolate, frame.payload.ldata));
 
-			args.GetReturnValue().Set(builder);
-		} else {
-			args.GetReturnValue().SetNull();
-		}
-	} else {
-		isolate->ThrowException(
-			Exception::TypeError(
-				String::NewFromUtf8(isolate, "Argument #0 needs to be a Buffer")
-			)
-		);
-	}
-}
+// 			args.GetReturnValue().Set(builder);
+// 		} else {
+// 			args.GetReturnValue().SetNull();
+// 		}
+// 	} else {
+// 		isolate->ThrowException(
+// 			Exception::TypeError(
+// 				String::NewFromUtf8(isolate, "Argument #0 needs to be a Buffer")
+// 			)
+// 		);
+// 	}
+// }
 
 void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
@@ -481,9 +500,10 @@ void knxclient_init(Handle<Object> module) {
 
 	// Methods
 	builder.set("parseKNX",                   knxclient_parse_knx);
-	builder.set("parseCEMI",                  knxclient_parse_cemi);
+	// builder.set("parseCEMI",                  knxclient_parse_cemi);
 	builder.set("parseAPDU",                  knxclient_parse_apdu);
 	builder.set("extractLData",               knxclient_extract_ldata);
+	builder.set("makeConnectionRequest",      knxclient_extract_ldata);
 }
 
 NODE_MODULE(knxclient_proto, knxclient_init)
