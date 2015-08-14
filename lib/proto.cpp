@@ -11,6 +11,21 @@ extern "C" {
 using namespace v8;
 
 static
+Local<Object> knxclient_host_info_to_object(Isolate* isolate, const knx_host_info& info) {
+	ObjectBuilder builder(isolate);
+
+	builder.set("protocol", info.protocol);
+	builder.set("port", info.port);
+
+	char address_str[INET_ADDRSTRLEN];
+	if (inet_ntop(AF_INET, &info.address, address_str, INET_ADDRSTRLEN)) {
+		builder.set("address", address_str);
+	}
+
+	return builder;
+}
+
+static
 Local<Value> knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
 	ObjectBuilder builder(isolate);
 	builder.set("service", ind.service);
@@ -21,7 +36,6 @@ Local<Value> knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
 		case KNX_DESCRIPTION_REQUEST:
 		case KNX_DESCRIPTION_RESPONSE:
 		case KNX_CONNECTION_REQUEST:
-		case KNX_CONNECTION_RESPONSE:
 		case KNX_CONNECTION_STATE_REQUEST:
 		case KNX_CONNECTION_STATE_RESPONSE:
 		case KNX_DISCONNECT_REQUEST:
@@ -31,6 +45,16 @@ Local<Value> knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
 		case KNX_TUNNEL_REQUEST:
 			// TODO: Implement me
 			break;
+
+		case KNX_CONNECTION_RESPONSE: {
+			auto& res = ind.payload.conn_res;
+
+			builder.set("channel", res.channel);
+			builder.set("status", res.status);
+			builder.set("host", knxclient_host_info_to_object(isolate, res.host));
+
+			break;
+		}
 
 		case KNX_TUNNEL_RESPONSE: {
 			auto buf = ObjectBuilder::fromData(
@@ -115,14 +139,7 @@ void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
 		// Parse KNXnet frame
 		knx_packet frame;
 		if (knx_parse(data, len, &frame)) {
-			Local<Object> ret_object = Object::New(isolate);
-
-			ret_object->Set(String::NewFromUtf8(isolate, "service"),
-			                Integer::New(isolate, frame.service));
-			ret_object->Set(String::NewFromUtf8(isolate, "payload"),
-			                knxclient_knx_to_object(isolate, frame));
-
-			args.GetReturnValue().Set(ret_object);
+			args.GetReturnValue().Set(knxclient_knx_to_object(isolate, frame));
 		} else {
 			args.GetReturnValue().SetNull();
 		}
