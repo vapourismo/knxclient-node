@@ -135,38 +135,6 @@ void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
 	}
 }
 
-// static
-// void knxclient_parse_cemi(const FunctionCallbackInfo<Value>& args) {
-// 	Isolate* isolate = args.GetIsolate();
-
-// 	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
-// 		Handle<Value> value = args[0];
-
-// 		// Extract buffer details
-// 		const uint8_t* data = (const uint8_t*) node::Buffer::Data(value);
-// 		size_t len = node::Buffer::Length(value);
-
-// 		// Parse CEMI
-// 		knx_cemi_frame frame;
-// 		if (knx_cemi_parse(data, len, &frame)) {
-// 			// Frame
-// 			ObjectBuilder builder(isolate);
-// 			builder.set("service", frame.service);
-// 			builder.set("payload", knxclient_ldata_to_object(isolate, frame.payload.ldata));
-
-// 			args.GetReturnValue().Set(builder);
-// 		} else {
-// 			args.GetReturnValue().SetNull();
-// 		}
-// 	} else {
-// 		isolate->ThrowException(
-// 			Exception::TypeError(
-// 				String::NewFromUtf8(isolate, "Argument #0 needs to be a Buffer")
-// 			)
-// 		);
-// 	}
-// }
-
 void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
@@ -376,6 +344,29 @@ void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 }
 
 static
+void knxclient_make_connreq(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = args.GetIsolate();
+
+	knx_connection_request req = {
+		KNX_CONNECTION_REQUEST_TUNNEL,
+		KNX_LAYER_TUNNEL,
+		KNX_HOST_INFO_NAT(KNX_PROTO_UDP),
+		KNX_HOST_INFO_NAT(KNX_PROTO_UDP)
+	};
+
+	uint8_t buffer[KNX_HEADER_SIZE + KNX_CONNECTION_REQUEST_SIZE];
+	knx_generate(buffer, KNX_CONNECTION_REQUEST, &req);
+
+	args.GetReturnValue().Set(
+		ObjectBuilder::fromData(
+			isolate,
+			(const char*) buffer,
+			KNX_HEADER_SIZE + KNX_CONNECTION_REQUEST_SIZE
+		)
+	);
+}
+
+static
 void knxclient_extract_ldata(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
@@ -500,10 +491,9 @@ void knxclient_init(Handle<Object> module) {
 
 	// Methods
 	builder.set("parseKNX",                   knxclient_parse_knx);
-	// builder.set("parseCEMI",                  knxclient_parse_cemi);
 	builder.set("parseAPDU",                  knxclient_parse_apdu);
 	builder.set("extractLData",               knxclient_extract_ldata);
-	builder.set("makeConnectionRequest",      knxclient_extract_ldata);
+	builder.set("makeConnectionRequest",      knxclient_make_connreq);
 }
 
 NODE_MODULE(knxclient_proto, knxclient_init)

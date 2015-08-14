@@ -63,23 +63,45 @@ function RouterClient(host, port) {
 	});
 
 	this.sock = sock;
-};
+}
 
 RouterClient.prototype = {
 	listen: function(fn) {
-		this.sock.on("message", function(packet, sender) {
-			var ldata = proto.extractLData(packet);
-			if (ldata) {
-				ldata.__proto__ = LData.prototype;
-				fn.call(this, sender, ldata);
-			}
-		});
+		this.sock.on("message", this.onMessage);
+	},
+
+	onMessage: function(packet, sender) {
+		var ldata = proto.extractLData(packet);
+		if (ldata) {
+			ldata.__proto__ = LData.prototype;
+			fn.call(this, sender, ldata);
+		}
+	}
+};
+
+function TunnelClient(host, port) {
+	port = port || 3671;
+
+	var sock = dgram.createSocket("udp4");
+	sock.on("message", this.onMessage);
+
+	var req = proto.makeConnectionRequest();
+	sock.send(req, 0, req.length, port, host);
+
+	this.sock = sock;
+}
+
+TunnelClient.prototype = {
+	onMessage: function(packet, sender) {
+		var knx = proto.parseKNX(packet);
+		console.log(knx);
 	}
 };
 
 module.exports = {
 	LData: LData,
 	RouterClient: RouterClient,
+	TunnelClient: TunnelClient,
 	formatIndividualAddress: formatIndividualAddress,
 	formatGroupAddress: formatGroupAddress
 };
