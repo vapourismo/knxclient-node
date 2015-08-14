@@ -61,40 +61,6 @@ Local<Value> knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
 }
 
 static
-void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
-	Isolate* isolate = args.GetIsolate();
-
-	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
-		Handle<Value> value = args[0];
-
-		// Extract buffer details
-		const uint8_t* data = (const uint8_t*) node::Buffer::Data(value);
-		size_t len = node::Buffer::Length(value);
-
-		// Parse KNXnet frame
-		knx_packet frame;
-		if (knx_parse(data, len, &frame)) {
-			Local<Object> ret_object = Object::New(isolate);
-
-			ret_object->Set(String::NewFromUtf8(isolate, "service"),
-			                Integer::New(isolate, frame.service));
-			ret_object->Set(String::NewFromUtf8(isolate, "payload"),
-			                knxclient_knx_to_object(isolate, frame));
-
-			args.GetReturnValue().Set(ret_object);
-		} else {
-			args.GetReturnValue().SetNull();
-		}
-	} else {
-		isolate->ThrowException(
-			Exception::TypeError(
-				String::NewFromUtf8(isolate, "Argument #0 needs to be a Buffer")
-			)
-		);
-	}
-}
-
-static
 Local<Object> knxclient_tpdu_to_object(Isolate* isolate, const knx_tpdu& tpdu) {
 	ObjectBuilder builder(isolate);
 
@@ -133,6 +99,40 @@ Local<Object> knxclient_ldata_to_object(Isolate* isolate, const knx_ldata& ldata
 	builder.set("tpdu",            knxclient_tpdu_to_object(isolate, ldata.tpdu));
 
 	return builder;
+}
+
+static
+void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = args.GetIsolate();
+
+	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
+		Handle<Value> value = args[0];
+
+		// Extract buffer details
+		const uint8_t* data = (const uint8_t*) node::Buffer::Data(value);
+		size_t len = node::Buffer::Length(value);
+
+		// Parse KNXnet frame
+		knx_packet frame;
+		if (knx_parse(data, len, &frame)) {
+			Local<Object> ret_object = Object::New(isolate);
+
+			ret_object->Set(String::NewFromUtf8(isolate, "service"),
+			                Integer::New(isolate, frame.service));
+			ret_object->Set(String::NewFromUtf8(isolate, "payload"),
+			                knxclient_knx_to_object(isolate, frame));
+
+			args.GetReturnValue().Set(ret_object);
+		} else {
+			args.GetReturnValue().SetNull();
+		}
+	} else {
+		isolate->ThrowException(
+			Exception::TypeError(
+				String::NewFromUtf8(isolate, "Argument #0 needs to be a Buffer")
+			)
+		);
+	}
 }
 
 // static
