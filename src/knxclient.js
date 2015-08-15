@@ -19,6 +19,10 @@ function formatIndividualAddress(addr) {
 	return a + "." + b + "." + c;
 }
 
+dgram.Socket.prototype.sendDatagram = function(address, port, buf, handler) {
+	return this.send(buf, 0, buf.length, port, address, handler);
+};
+
 function LData() {}
 
 LData.prototype = {
@@ -89,55 +93,81 @@ RouterClient.prototype = {
 	}
 };
 
-function TunnelClient(host, port) {
-	var sock = dgram.createSocket("udp4");
-	sock.on("message", this.onMessage.bind(this));
+function TunnelClient(conf) {
+	this.conf = {
+		host:       conf.host,
+		port:       conf.port || 3671,
+		timeout:    conf.timeout || 5000,
+		connected:  conf.connected || function() {},
+		error:      conf.error || function() {},
+		message:    conf.message || function() {},
+		disconnect: conf.disconnect || function() {}
+	};
 
-	var req = proto.makeConnectionRequest();
-	sock.send(req, 0, req.length, port || 3671, host);
+	this.sock = dgram.createSocket("udp4");
+	this.sock.on("message", TunnelClient.processMessage.bind(this));
+	this.sock.sendDatagram(this.conf.host, this.conf.port, proto.makeConnectionRequest());
 
-	this.sock = sock;
+	this.connectionTimeout = setTimeout(TunnelClient.processTimeout.bind(this), this.conf.timeout);
 }
 
-TunnelClient.prototype = {
-	onMessage: function(packet, sender) {
-		var knx = proto.parseKNX(packet);
+TunnelClient.ErrorCode = {
+	Timeout: 1,
+	Refused: 2
+};
 
-		if (knx) {
-			if (knx.service == proto.ConnectionResponse) {
-				if (knx.status == 0) {
-					this.channel = knx.channel;
+TunnelClient.processMessage = function(packet, sender) {
+	var knx = proto.parseKNX(packet);
 
-					if (this.onConnect) {
-						this.onConnect();
-					}
-				} else {
-					this.sock.close();
+	if (knx) {
+		if (knx.service == proto.ConnectionResponse) {
+			if (knx.status == 0) {
+				clearTimeout(this.connectionTimeout);
+				this.connectionTimeout = null;
 
-					if (this.onError) {
-						this.onError();
-					}
-				}
-			} else if (knx.service == proto.DisconnectRequest && knx.channel == this.channel) {
-				var res = proto.makeDisconnectResponse(this.channel);
-				this.sock.send(req, 0, req.length,
-				               sender.port, sender.address,
-				               this.sock.close.bind(this.sock));
+				this.channel = knx.channel;
+				this.conf.connected.call(this);
+			} else {
+				this.sock.close();
+				this.conf.error.call(this, TunnelClient.ErrorCode.Refused);
+			}
+		} else if (knx.service == proto.DisconnectRequest && knx.channel == this.channel) {
+			this.sock.sendDatagram(sender.address, sender.port,
+			                       proto.makeDisconnectResponse(this.channel),
+			                       this.sock.close.bind(this.sock));
+			this.channel = null;
+			this.conf.disconnect.call(this, knx.status);
+		} else if (knx.service == proto.TunnelRequest && knx.channel == this.channel) {
+			this.sock.sendDatagram(sender.address, sender.port,
+			                       proto.makeTunnelResponse(knx.channel, knx.seqNumber));
 
-				if (this.onDisconnect) {
-					this.onDisconnect(knx.status);
-				}
-			} else if (knx.service == proto.TunnelRequest && knx.channel == this.channel) {
-				var res = proto.makeTunnelResponse(knx.channel, knx.seqNumber);
-				this.sock.send(res, 0, res.length,
-				               sender.port, sender.address);
-
-				if (isLData(knx.data) && this.onData) {
-					this.onData(knx.data.payload);
-				}
+			if (isLData(knx.data) && this.onData) {
+				var ldata = knx.data.payload;
+				ldata.__proto__ = LData.prototype;
+				this.conf.message.call(this, ldata);
 			}
 		}
-	},
+	}
+};
+
+TunnelClient.processTimeout = function() {
+	if (!this.channel) {
+		this.sock.close();
+		this.conf.error.call(this, TunnelClient.ErrorCode.Timeout);
+	}
+
+	this.connectionTimeout = null;
+};
+
+TunnelClient.prototype = {
+	disconnect: function(reason) {
+		reason = reason || 0;
+
+		if (this.channel) {
+			// TODO: Make disconnect request
+			// TODO: Send disconnect request
+		}
+	}
 };
 
 module.exports = {
