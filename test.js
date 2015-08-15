@@ -9,8 +9,14 @@ var tc = new knxclient.TunnelClient({
 	error: function(code) {
 		console.log("Connection: refused, code = " + code);
 	},
-	message: function(data) {
-		console.log("Message: " + data);
+	message: function(ldata) {
+		var ext = "";
+
+		if (ldata.hasData()) {
+			ext = ", value = " + ldata.extract(knxclient.dpt.Float16);
+		}
+
+		console.log("Message: " + ldata + ext);
 	},
 	disconnect: function(status) {
 		console.log("Disconnect: status = " + status);

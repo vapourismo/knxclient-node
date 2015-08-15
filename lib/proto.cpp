@@ -511,20 +511,24 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("Escape",                     KNX_APCI_ESCAPE);
 
 	// Data constants
-	builder.set("Bool",                       KNX_DPT_BOOL);
-	builder.set("ControlValue",               KNX_DPT_CVALUE);
-	builder.set("ControlStep",                KNX_DPT_CSTEP);
-	builder.set("Char",                       KNX_DPT_CHAR);
-	builder.set("Unsigned8",                  KNX_DPT_UNSIGNED8);
-	builder.set("Signed8",                    KNX_DPT_SIGNED8);
-	builder.set("Unsigned16",                 KNX_DPT_UNSIGNED16);
-	builder.set("Signed16",                   KNX_DPT_SIGNED16);
-	builder.set("Float16",                    KNX_DPT_FLOAT16);
-	builder.set("TimeOfDay",                  KNX_DPT_TIMEOFDAY);
-	builder.set("Date",                       KNX_DPT_DATE);
-	builder.set("Unsigned32",                 KNX_DPT_UNSIGNED32);
-	builder.set("Signed32",                   KNX_DPT_SIGNED32);
-	builder.set("Float32",                    KNX_DPT_FLOAT32);
+	ObjectBuilder dpt_builder(isolate);
+
+	dpt_builder.set("Bool",                   KNX_DPT_BOOL);
+	dpt_builder.set("ControlValue",           KNX_DPT_CVALUE);
+	dpt_builder.set("ControlStep",            KNX_DPT_CSTEP);
+	dpt_builder.set("Char",                   KNX_DPT_CHAR);
+	dpt_builder.set("Unsigned8",              KNX_DPT_UNSIGNED8);
+	dpt_builder.set("Signed8",                KNX_DPT_SIGNED8);
+	dpt_builder.set("Unsigned16",             KNX_DPT_UNSIGNED16);
+	dpt_builder.set("Signed16",               KNX_DPT_SIGNED16);
+	dpt_builder.set("Float16",                KNX_DPT_FLOAT16);
+	dpt_builder.set("TimeOfDay",              KNX_DPT_TIMEOFDAY);
+	dpt_builder.set("Date",                   KNX_DPT_DATE);
+	dpt_builder.set("Unsigned32",             KNX_DPT_UNSIGNED32);
+	dpt_builder.set("Signed32",               KNX_DPT_SIGNED32);
+	dpt_builder.set("Float32",                KNX_DPT_FLOAT32);
+
+	builder.set("dpt", dpt_builder);
 
 	// Methods
 	builder.set("parseKNX",                   knxclient_parse_knx);

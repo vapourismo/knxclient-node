@@ -33,6 +33,13 @@ LData.prototype = {
 		);
 	},
 
+	extract: function(dpt) {
+		if (this.hasData())
+			return proto.parseAPDU(this.tpdu.payload, dpt);
+		else
+	    	return null;
+	},
+
 	toString: function() {
 		var ret = formatIndividualAddress(this.source) + " -> ";
 
@@ -175,5 +182,6 @@ module.exports = {
 	RouterClient: RouterClient,
 	TunnelClient: TunnelClient,
 	formatIndividualAddress: formatIndividualAddress,
-	formatGroupAddress: formatGroupAddress
+	formatGroupAddress: formatGroupAddress,
+	dpt: proto.dpt
 };
