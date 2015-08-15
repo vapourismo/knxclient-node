@@ -141,7 +141,7 @@ TunnelClient.processMessage = function(packet, sender) {
 			this.sock.sendDatagram(sender.address, sender.port,
 			                       proto.makeTunnelResponse(knx.channel, knx.seqNumber));
 
-			if (isLData(knx.data) && this.onData) {
+			if (isLData(knx.data)) {
 				var ldata = knx.data.payload;
 				ldata.__proto__ = LData.prototype;
 				this.conf.message.call(this, ldata);
