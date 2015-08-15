@@ -100,6 +100,16 @@ ObjectBuilder knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
 			break;
 		}
 
+		case KNX_DISCONNECT_REQUEST: {
+			auto& req = ind.payload.dc_req;
+
+			builder.set("channel", req.channel);
+			builder.set("status", req.status);
+			builder.set("host", knxclient_host_info_to_object(isolate, req.host));
+
+			break;
+		}
+
 		case KNX_TUNNEL_REQUEST: {
 			builder.set("channel", ind.payload.tunnel_req.channel);
 			builder.set("seqNumber", ind.payload.tunnel_req.seq_number);
