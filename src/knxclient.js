@@ -65,66 +65,79 @@ function RouterClient(host, port) {
 	this.sock = sock;
 }
 
+function isLData(cemi) {
+	return (
+		cemi.service == proto.LDataReq ||
+		cemi.service == proto.LDataInd ||
+		cemi.service == proto.LDataCon
+	);
+}
+
 RouterClient.prototype = {
 	listen: function(fn) {
 		this.sock.on("message", this.onMessage.bind(this, fn || function() {}));
 	},
 
 	onMessage: function(fn, packet, sender) {
-		var ldata = proto.extractLData(packet);
+		var knx = proto.parseKNX(packet);
 
-		if (ldata) {
+		if (knx && knx.service == proto.RoutingIndication && isLData(knx.data)) {
+			var ldata = knx.data.payload;
 			ldata.__proto__ = LData.prototype;
-			fn.call(this, sender, ldata);
+			fn.call(this, ldata);
 		}
 	}
 };
 
-function TunnelClient(host, port, connectionHandler) {
-	if (port != null) {
-		if (typeof(port) == "function") {
-			connectionHandler = port;
-			port = 3671;
-		}
-	}
-
+function TunnelClient(host, port) {
 	var sock = dgram.createSocket("udp4");
-	sock.on("message", this.onMessageConnecting.bind(this));
+	sock.on("message", this.onMessage.bind(this));
 
 	var req = proto.makeConnectionRequest();
-	sock.send(req, 0, req.length, port, host);
+	sock.send(req, 0, req.length, port || 3671, host);
 
-	this.onConnect = connectionHandler || function() {};
 	this.sock = sock;
 }
 
 TunnelClient.prototype = {
-	onMessageConnecting: function(packet, sender) {
-		var knx = proto.parseKNX(packet);
-
-		if (knx && knx.service == proto.ConnectionResponse) {
-			if (knx.status == 0) {
-				this.channel = knx.channel;
-				this.sock.on("message", this.onMessage.bind(this));
-
-				this.onConnect();
-			} else {
-				this.sock.close();
-			}
-		}
-	},
-
 	onMessage: function(packet, sender) {
 		var knx = proto.parseKNX(packet);
 
 		if (knx) {
-			if (knx.service == proto.DisconnectRequest) {
-				if (knx.channel == this.channel) {
+			if (knx.service == proto.ConnectionResponse) {
+				if (knx.status == 0) {
+					this.channel = knx.channel;
 
+					if (this.onConnect) {
+						this.onConnect();
+					}
+				} else {
+					this.sock.close();
+
+					if (this.onError) {
+						this.onError();
+					}
+				}
+			} else if (knx.service == proto.DisconnectRequest && knx.channel == this.channel) {
+				var res = proto.makeDisconnectResponse(this.channel);
+				this.sock.send(req, 0, req.length,
+				               sender.port, sender.address,
+				               this.sock.close.bind(this.sock));
+
+				if (this.onDisconnect) {
+					this.onDisconnect(knx.status);
+				}
+			} else if (knx.service == proto.TunnelRequest && knx.channel == this.channel) {
+				var res = proto.makeTunnelResponse(knx.channel, knx.seqNumber);
+				this.sock.send(res, 0, res.length,
+				               sender.port, sender.address);
+
+				if (isLData(knx.data) && this.onData) {
+					this.onData(knx.data.payload);
 				}
 			}
 		}
-	}
+	},
 };
 
 module.exports = {
