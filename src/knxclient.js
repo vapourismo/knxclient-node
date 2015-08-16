@@ -171,8 +171,11 @@ TunnelClient.prototype = {
 		reason = reason || 0;
 
 		if (this.channel) {
-			// TODO: Make disconnect request
-			// TODO: Send disconnect request
+			this.sock.sendDatagram(this.conf.host, this.conf.port,
+			                       proto.makeDisconnectRequest(this.channel),
+			                       this.sock.close.bind(this.sock));
+
+			this.channel = null;
 		}
 	}
 };

@@ -388,6 +388,36 @@ void knxclient_make_connreq(const FunctionCallbackInfo<Value>& args) {
 }
 
 static
+void knxclient_make_dcreq(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = args.GetIsolate();
+
+	if (args.Length() > 0 && args[0]->IsUint32()) {
+		knx_disconnect_request req = {
+			uint8_t(args[0]->Uint32Value()),
+			0,
+			{KNX_PROTO_UDP, 0, 0}
+		};
+
+		uint8_t buffer[KNX_HEADER_SIZE + KNX_DISCONNECT_REQUEST_SIZE];
+		knx_generate(buffer, KNX_DISCONNECT_REQUEST, &req);
+
+		args.GetReturnValue().Set(
+			ObjectBuilder::fromData(
+				isolate,
+				(const char*) buffer,
+				KNX_HEADER_SIZE + KNX_DISCONNECT_REQUEST_SIZE
+			)
+		);
+	} else {
+		isolate->ThrowException(
+			Exception::TypeError(
+				String::NewFromUtf8(isolate, "Invalid argument types")
+			)
+		);
+	}
+}
+
+static
 void knxclient_make_dcres(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
@@ -535,6 +565,7 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("parseAPDU",                  knxclient_parse_apdu);
 	builder.set("makeConnectionRequest",      knxclient_make_connreq);
 	builder.set("makeDisconnectResponse",     knxclient_make_dcres);
+	builder.set("makeDisconnectRequest",      knxclient_make_dcreq);
 	builder.set("makeTunnelResponse",         knxclient_make_tunnelres);
 }
 

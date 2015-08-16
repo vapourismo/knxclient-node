@@ -13,10 +13,12 @@ var tc = new knxclient.TunnelClient({
 		var ext = "";
 
 		if (ldata.hasData()) {
-			ext = ", value = " + ldata.extract(knxclient.dpt.Float16);
+			ext = ", value = " + ldata.extract(knxclient.dpt.Unsigned16);
 		}
 
 		console.log("Message: " + ldata + ext);
+
+		this.disconnect();
 	},
 	disconnect: function(status) {
 		console.log("Disconnect: status = " + status);
