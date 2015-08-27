@@ -6,17 +6,17 @@
 #include <node.h>
 #include <node_buffer.h>
 
-struct ObjectBuilder: v8::Local<v8::Object> {
+struct ObjectWrapper: v8::Local<v8::Object> {
 	v8::Isolate* isolate;
 
 	inline
-	ObjectBuilder(v8::Isolate* isolate):
+	ObjectWrapper(v8::Isolate* isolate):
 		v8::Local<v8::Object>(v8::Object::New(isolate)),
 		isolate(isolate)
 	{}
 
 	inline
-	ObjectBuilder(v8::Isolate* isolate, const v8::Handle<v8::Object>& rhs):
+	ObjectWrapper(v8::Isolate* isolate, const v8::Handle<v8::Object>& rhs):
 		v8::Local<v8::Object>(rhs),
 		isolate(isolate)
 	{}

@@ -64,7 +64,7 @@ void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 			case KNX_DPT_CVALUE: {
 				knx_cvalue value;
 				if (knx_dpt_from_apdu(data, len, KNX_DPT_CVALUE, &value)) {
-					ObjectBuilder builder(isolate);
+					ObjectWrapper builder(isolate);
 
 					builder.set("control", value.control);
 					builder.set("value", value.value);
@@ -80,7 +80,7 @@ void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 			case KNX_DPT_CSTEP: {
 				knx_cstep value;
 				if (knx_dpt_from_apdu(data, len, KNX_DPT_CSTEP, &value)) {
-					ObjectBuilder builder(isolate);
+					ObjectWrapper builder(isolate);
 
 					builder.set("control", value.control);
 					builder.set("step", value.step);
@@ -169,7 +169,7 @@ void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 			case KNX_DPT_TIMEOFDAY: {
 				knx_timeofday value;
 				if (knx_dpt_from_apdu(data, len, KNX_DPT_TIMEOFDAY, &value)) {
-					ObjectBuilder builder(isolate);
+					ObjectWrapper builder(isolate);
 
 					builder.set("day", value.day);
 					builder.set("hour", value.hour);
@@ -187,7 +187,7 @@ void knxclient_parse_apdu(const FunctionCallbackInfo<Value>& args) {
 			case KNX_DPT_DATE: {
 				knx_date value;
 				if (knx_dpt_from_apdu(data, len, KNX_DPT_DATE, &value)) {
-					ObjectBuilder builder(isolate);
+					ObjectWrapper builder(isolate);
 
 					builder.set("day", value.day);
 					builder.set("month", value.month);
@@ -262,7 +262,7 @@ void knxclient_make_connreq(const FunctionCallbackInfo<Value>& args) {
 	knx_generate(buffer, KNX_CONNECTION_REQUEST, &req);
 
 	args.GetReturnValue().Set(
-		ObjectBuilder::fromData(
+		ObjectWrapper::fromData(
 			isolate,
 			(const char*) buffer,
 			KNX_HEADER_SIZE + KNX_CONNECTION_REQUEST_SIZE
@@ -285,7 +285,7 @@ void knxclient_make_dcreq(const FunctionCallbackInfo<Value>& args) {
 		knx_generate(buffer, KNX_DISCONNECT_REQUEST, &req);
 
 		args.GetReturnValue().Set(
-			ObjectBuilder::fromData(
+			ObjectWrapper::fromData(
 				isolate,
 				(const char*) buffer,
 				KNX_HEADER_SIZE + KNX_DISCONNECT_REQUEST_SIZE
@@ -314,7 +314,7 @@ void knxclient_make_dcres(const FunctionCallbackInfo<Value>& args) {
 		knx_generate(buffer, KNX_DISCONNECT_RESPONSE, &res);
 
 		args.GetReturnValue().Set(
-			ObjectBuilder::fromData(
+			ObjectWrapper::fromData(
 				isolate,
 				(const char*) buffer,
 				KNX_HEADER_SIZE + KNX_DISCONNECT_RESPONSE_SIZE
@@ -344,7 +344,7 @@ void knxclient_make_tunnelres(const FunctionCallbackInfo<Value>& args) {
 		knx_generate(buffer, KNX_TUNNEL_RESPONSE, &res);
 
 		args.GetReturnValue().Set(
-			ObjectBuilder::fromData(
+			ObjectWrapper::fromData(
 				isolate,
 				(const char*) buffer,
 				KNX_HEADER_SIZE + KNX_TUNNEL_RESPONSE_SIZE
@@ -362,7 +362,7 @@ void knxclient_make_tunnelres(const FunctionCallbackInfo<Value>& args) {
 static
 void knxclient_init(Handle<Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
-	ObjectBuilder builder(isolate, module);
+	ObjectWrapper builder(isolate, module);
 
 	// Constants
 	builder.set("SearchRequest",              KNX_SEARCH_REQUEST);
@@ -424,7 +424,7 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("Escape",                     KNX_APCI_ESCAPE);
 
 	// Data constants
-	ObjectBuilder dpt_builder(isolate);
+	ObjectWrapper dpt_builder(isolate);
 
 	dpt_builder.set("Bool",                   KNX_DPT_BOOL);
 	dpt_builder.set("ControlValue",           KNX_DPT_CVALUE);

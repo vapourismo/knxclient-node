@@ -11,7 +11,7 @@ void data_free(char* data, void*) {
 	delete[] data;
 }
 
-Local<Object> ObjectBuilder::fromData(Isolate* isolate, const char* data, size_t length) {
+Local<Object> ObjectWrapper::fromData(Isolate* isolate, const char* data, size_t length) {
 	char* data_copy = new char[length];
 	std::copy(data, data + length, data_copy);
 	return node::Buffer::New(isolate, data_copy, length, data_free, nullptr);

@@ -2,8 +2,8 @@
 
 using namespace v8;
 
-ObjectBuilder knxclient_build_host_info(Isolate* isolate, const knx_host_info& info) {
-	ObjectBuilder builder(isolate);
+ObjectWrapper knxclient_build_host_info(Isolate* isolate, const knx_host_info& info) {
+	ObjectWrapper builder(isolate);
 
 	builder.set("protocol", info.protocol);
 	builder.set("port", info.port);
@@ -16,8 +16,8 @@ ObjectBuilder knxclient_build_host_info(Isolate* isolate, const knx_host_info& i
 	return builder;
 }
 
-ObjectBuilder knxclient_build_tpdu(Isolate* isolate, const knx_tpdu& tpdu) {
-	ObjectBuilder builder(isolate);
+ObjectWrapper knxclient_build_tpdu(Isolate* isolate, const knx_tpdu& tpdu) {
+	ObjectWrapper builder(isolate);
 
 	builder.set("tpci", tpdu.tpci);
 	builder.set("seq_number", tpdu.seq_number);
@@ -26,7 +26,7 @@ ObjectBuilder knxclient_build_tpdu(Isolate* isolate, const knx_tpdu& tpdu) {
 		case KNX_TPCI_UNNUMBERED_DATA:
 		case KNX_TPCI_NUMBERED_DATA:
 			builder.set("apci", tpdu.info.data.apci);
-			builder.set("payload", ObjectBuilder::fromData(isolate, (const char*) tpdu.info.data.payload, tpdu.info.data.length));
+			builder.set("payload", ObjectWrapper::fromData(isolate, (const char*) tpdu.info.data.payload, tpdu.info.data.length));
 			break;
 
 		case KNX_TPCI_UNNUMBERED_CONTROL:
@@ -38,8 +38,8 @@ ObjectBuilder knxclient_build_tpdu(Isolate* isolate, const knx_tpdu& tpdu) {
 	return builder;
 }
 
-ObjectBuilder knxclient_build_ldata(Isolate* isolate, const knx_ldata& ldata) {
-	ObjectBuilder builder(isolate);
+ObjectWrapper knxclient_build_ldata(Isolate* isolate, const knx_ldata& ldata) {
+	ObjectWrapper builder(isolate);
 
 	builder.set("priority",        ldata.control1.priority);
 	builder.set("repeat",          ldata.control1.repeat);
@@ -55,8 +55,8 @@ ObjectBuilder knxclient_build_ldata(Isolate* isolate, const knx_ldata& ldata) {
 	return builder;
 }
 
-ObjectBuilder knxclient_build_cemi(Isolate* isolate, const knx_cemi& cemi) {
-	ObjectBuilder builder(isolate);
+ObjectWrapper knxclient_build_cemi(Isolate* isolate, const knx_cemi& cemi) {
+	ObjectWrapper builder(isolate);
 
 	builder.set("service", cemi.service);
 
@@ -71,8 +71,8 @@ ObjectBuilder knxclient_build_cemi(Isolate* isolate, const knx_cemi& cemi) {
 	return builder;
 }
 
-ObjectBuilder knxclient_build_packet(Isolate* isolate, const knx_packet& ind) {
-	ObjectBuilder builder(isolate);
+ObjectWrapper knxclient_build_packet(Isolate* isolate, const knx_packet& ind) {
+	ObjectWrapper builder(isolate);
 	builder.set("service", ind.service);
 
 	switch (ind.service) {
