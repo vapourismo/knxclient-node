@@ -51,6 +51,16 @@ struct ObjectWrapper: v8::Local<v8::Object> {
 		(*this)->Set(v8::String::NewFromUtf8(isolate, name), value);
 	}
 
+	inline
+	bool has(const char* name) {
+		return (*this)->Has(v8::String::NewFromUtf8(isolate, name));
+	}
+
+	inline
+	v8::Local<v8::Value> get(const char* name) {
+		return (*this)->Get(v8::String::NewFromUtf8(isolate, name));
+	}
+
 	static
 	v8::Local<v8::Object> fromData(v8::Isolate* isolate, const char* data, size_t length);
 };
