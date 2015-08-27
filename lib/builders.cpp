@@ -97,16 +97,18 @@ ObjectWrapper knxclient_build_packet(Isolate* isolate, const knx_packet& ind) {
 		}
 
 		case KNX_TUNNEL_REQUEST: {
-			builder.set("channel", ind.payload.tunnel_req.channel);
-			builder.set("seqNumber", ind.payload.tunnel_req.seq_number);
-			builder.set("data", knxclient_build_cemi(isolate, ind.payload.tunnel_req.data));
+			auto& req = ind.payload.tunnel_req;
+
+			builder.set("channel", req.channel);
+			builder.set("seqNumber", req.seq_number);
+			builder.set("data", knxclient_build_cemi(isolate, req.data));
+
 			break;
 		}
 
-		case KNX_ROUTING_INDICATION: {
+		case KNX_ROUTING_INDICATION:
 			builder.set("data", knxclient_build_cemi(isolate, ind.payload.routing_ind.data));
 			break;
-		}
 
 		default:
 			break;
