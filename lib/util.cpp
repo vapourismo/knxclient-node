@@ -16,3 +16,7 @@ Local<Object> ObjectBuilder::fromData(Isolate* isolate, const char* data, size_t
 	std::copy(data, data + length, data_copy);
 	return node::Buffer::New(isolate, data_copy, length, data_free, nullptr);
 }
+
+void ValueWrapper<NodeBuffer>::freeData(char* data, void*) {
+	delete[] data;
+}

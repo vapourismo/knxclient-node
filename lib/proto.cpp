@@ -1,8 +1,9 @@
 #include "util.hpp"
+#include "builders.hpp"
 
 extern "C" {
-	#include <knxclient/proto/cemi.h>
-	#include <knxclient/proto/knxnetip.h>
+	#include <knxproto/proto/cemi.h>
+	#include <knxproto/proto/knxnetip.h>
 }
 
 #include <iostream>
@@ -12,125 +13,7 @@ extern "C" {
 using namespace v8;
 
 static
-ObjectBuilder knxclient_host_info_to_object(Isolate* isolate, const knx_host_info& info) {
-	ObjectBuilder builder(isolate);
-
-	builder.set("protocol", info.protocol);
-	builder.set("port", info.port);
-
-	char address_str[INET_ADDRSTRLEN];
-	if (inet_ntop(AF_INET, &info.address, address_str, INET_ADDRSTRLEN)) {
-		builder.set("address", address_str);
-	}
-
-	return builder;
-}
-
-static
-ObjectBuilder knxclient_tpdu_to_object(Isolate* isolate, const knx_tpdu& tpdu) {
-	ObjectBuilder builder(isolate);
-
-	builder.set("tpci", tpdu.tpci);
-	builder.set("seq_number", tpdu.seq_number);
-
-	switch (tpdu.tpci) {
-		case KNX_TPCI_UNNUMBERED_DATA:
-		case KNX_TPCI_NUMBERED_DATA:
-			builder.set("apci", tpdu.info.data.apci);
-			builder.set("payload", ObjectBuilder::fromData(isolate, (const char*) tpdu.info.data.payload, tpdu.info.data.length));
-			break;
-
-		case KNX_TPCI_UNNUMBERED_CONTROL:
-		case KNX_TPCI_NUMBERED_CONTROL:
-			builder.set("control", tpdu.info.control);
-			break;
-	}
-
-	return builder;
-}
-
-static
-ObjectBuilder knxclient_ldata_to_object(Isolate* isolate, const knx_ldata& ldata) {
-	ObjectBuilder builder(isolate);
-
-	builder.set("priority",        ldata.control1.priority);
-	builder.set("repeat",          ldata.control1.repeat);
-	builder.set("systemBroadcast", ldata.control1.system_broadcast);
-	builder.set("requestAck",      ldata.control1.request_ack);
-	builder.set("error",           ldata.control1.error);
-	builder.set("addressType",     ldata.control2.address_type);
-	builder.set("hops",            ldata.control2.hops);
-	builder.set("source",          ldata.source);
-	builder.set("destination",     ldata.destination);
-	builder.set("tpdu",            knxclient_tpdu_to_object(isolate, ldata.tpdu));
-
-	return builder;
-}
-
-static
-Local<Object> knxclient_cemi_to_object(Isolate* isolate, const knx_cemi& cemi) {
-	ObjectBuilder builder(isolate);
-
-	builder.set("service", cemi.service);
-
-	switch (cemi.service) {
-		case KNX_CEMI_LDATA_REQ:
-		case KNX_CEMI_LDATA_IND:
-		case KNX_CEMI_LDATA_CON:
-			builder.set("payload", knxclient_ldata_to_object(isolate, cemi.payload.ldata));
-			break;
-	}
-
-	return builder;
-}
-
-static
-ObjectBuilder knxclient_knx_to_object(Isolate* isolate, const knx_packet& ind) {
-	ObjectBuilder builder(isolate);
-	builder.set("service", ind.service);
-
-	switch (ind.service) {
-		case KNX_CONNECTION_RESPONSE: {
-			auto& res = ind.payload.conn_res;
-
-			builder.set("channel", res.channel);
-			builder.set("status", res.status);
-			builder.set("host", knxclient_host_info_to_object(isolate, res.host));
-
-			break;
-		}
-
-		case KNX_DISCONNECT_REQUEST: {
-			auto& req = ind.payload.dc_req;
-
-			builder.set("channel", req.channel);
-			builder.set("status", req.status);
-			builder.set("host", knxclient_host_info_to_object(isolate, req.host));
-
-			break;
-		}
-
-		case KNX_TUNNEL_REQUEST: {
-			builder.set("channel", ind.payload.tunnel_req.channel);
-			builder.set("seqNumber", ind.payload.tunnel_req.seq_number);
-			builder.set("data", knxclient_cemi_to_object(isolate, ind.payload.tunnel_req.data));
-			break;
-		}
-
-		case KNX_ROUTING_INDICATION: {
-			builder.set("data", knxclient_cemi_to_object(isolate, ind.payload.routing_ind.data));
-			break;
-		}
-
-		default:
-			break;
-	}
-
-	return builder;
-}
-
-static
-void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
+void knxclient_parse_packet(const FunctionCallbackInfo<Value>& args) {
 	Isolate* isolate = args.GetIsolate();
 
 	if (args.Length() > 0 && node::Buffer::HasInstance(args[0])) {
@@ -143,7 +26,7 @@ void knxclient_parse_knx(const FunctionCallbackInfo<Value>& args) {
 		// Parse KNXnet frame
 		knx_packet frame;
 		if (knx_parse(data, len, &frame)) {
-			args.GetReturnValue().Set(knxclient_knx_to_object(isolate, frame));
+			args.GetReturnValue().Set(knxclient_build_packet(isolate, frame));
 		} else {
 			args.GetReturnValue().SetNull();
 		}
@@ -370,7 +253,7 @@ void knxclient_make_connreq(const FunctionCallbackInfo<Value>& args) {
 
 	knx_connection_request req = {
 		KNX_CONNECTION_REQUEST_TUNNEL,
-		KNX_LAYER_TUNNEL,
+		KNX_CONNECTION_LAYER_TUNNEL,
 		KNX_HOST_INFO_NAT(KNX_PROTO_UDP),
 		KNX_HOST_INFO_NAT(KNX_PROTO_UDP)
 	};
@@ -561,7 +444,7 @@ void knxclient_init(Handle<Object> module) {
 	builder.set("dpt", dpt_builder);
 
 	// Methods
-	builder.set("parseKNX",                   knxclient_parse_knx);
+	builder.set("parsePacket",                knxclient_parse_packet);
 	builder.set("parseAPDU",                  knxclient_parse_apdu);
 	builder.set("makeConnectionRequest",      knxclient_make_connreq);
 	builder.set("makeDisconnectResponse",     knxclient_make_dcres);

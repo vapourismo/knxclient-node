@@ -19,6 +19,14 @@ function formatIndividualAddress(addr) {
 	return a + "." + b + "." + c;
 }
 
+function cemiHasLData(cemi) {
+	return (
+		cemi.service == proto.LDataReq ||
+		cemi.service == proto.LDataInd ||
+		cemi.service == proto.LDataCon
+	);
+}
+
 dgram.Socket.prototype.sendDatagram = function(address, port, buf, handler) {
 	return this.send(buf, 0, buf.length, port, address, handler);
 };
@@ -60,29 +68,31 @@ LData.prototype = {
 	}
 };
 
-function RouterClient(host, port) {
-	if (host != null && port == null && typeof(host) == "number") {
-		port = host;
-		host = null;
+function RouterClient(conf) {
+	this.conf = {
+		host:       conf.host || "224.0.23.12",
+		port:       conf.port || 3671,
+		message:    conf.message || function() {},
+	};
+
+	this.sock = dgram.createSocket("udp4");
+	this.sock.bind(this.conf.port, function() {
+		this.sock.addMembership(this.conf.host);
+		this.sock.setMulticastLoopback(false);
+	}.bind(this));
+
+	this.sock.on("message", RouterClient.processMessage.bind(this));
+}
+
+RouterClient.processMessage = function(packet, sender) {
+	var knx = proto.parseKNX(packet);
+
+	if (knx && knx.service == proto.RoutingIndication && cemiHasLData(knx.data)) {
+		var ldata = knx.data.payload;
+		ldata.__proto__ = LData.prototype;
+		this.conf.message.call(this, sender, ldata);
 	}
-
-	var sock = dgram.createSocket("udp4");
-
-	sock.bind(port || 3671, function() {
-		this.addMembership(host || "224.0.23.12");
-		this.setMulticastLoopback(false);
-	});
-
-	this.sock = sock;
-}
-
-function isLData(cemi) {
-	return (
-		cemi.service == proto.LDataReq ||
-		cemi.service == proto.LDataInd ||
-		cemi.service == proto.LDataCon
-	);
-}
+};
 
 RouterClient.prototype = {
 	listen: function(fn) {
@@ -148,7 +158,7 @@ TunnelClient.processMessage = function(packet, sender) {
 			this.sock.sendDatagram(sender.address, sender.port,
 			                       proto.makeTunnelResponse(knx.channel, knx.seqNumber));
 
-			if (isLData(knx.data)) {
+			if (cemiHasLData(knx.data)) {
 				var ldata = knx.data.payload;
 				ldata.__proto__ = LData.prototype;
 				this.conf.message.call(this, ldata);
