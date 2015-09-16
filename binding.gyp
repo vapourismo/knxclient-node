@@ -1,14 +1,21 @@
 {
 	"targets": [
 		{
-			"target_name": "knxclient_proto",
+			"target_name": "knxproto",
 			"sources": [
-				"lib/proto.cpp",
-				"lib/builders.cpp",
-				"lib/util.cpp"
+				"lib/knxproto/knxproto.cpp"
 			],
 			"cflags": [
-				"-std=c++11"
+				"-std=c++14",
+				"-O2",
+				"-Wall",
+				"-Wextra",
+				"-pedantic",
+				"-fmessage-length=0",
+				"-Wno-unused-parameter",
+				"-Wno-missing-field-initializers",
+				"-D_GLIBCXX_USE_C99",
+				"-I../deps/jawra/lib"
 			],
 			"ldflags": [
 				"-lknxproto"

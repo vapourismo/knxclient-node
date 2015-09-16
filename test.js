@@ -1,34 +1,7 @@
-var knxclient = require("./src/knxclient.js");
+var proto = require("./build/Release/knxproto.node");
 
-// var tc = new knxclient.TunnelClient({
-// 	host: "10.0.0.2",
-// 	port: 3671,
-// 	connected: function() {
-// 		console.log("Connection: established, channel = " + this.channel);
-// 	},
-// 	error: function(code) {
-// 		console.log("Connection: refused, code = " + code);
-// 	},
-// 	message: function(ldata) {
-// 		var ext = "";
+var gw = proto.makeRoutedWrite(1337, 2563, new Buffer([0, 1]));
+console.log(gw);
 
-// 		if (ldata.hasData()) {
-// 			ext = ", value = " + ldata.extract(knxclient.dpt.Unsigned16);
-// 		}
-
-// 		console.log("Message: " + ldata + ext);
-
-// 		this.disconnect();
-// 	},
-// 	disconnect: function(status) {
-// 		console.log("Disconnect: status = " + status);
-// 	}
-// });
-
-var rc = new knxclient.RouterClient({
-	message: function(sender, ldata) {
-		console.log(sender);
-		console.log(ldata);
-		console.log(ldata.extract(knxclient.dpt.Unsigned16));
-	}
-});
+var res = proto.parseRoutedWrite(gw);
+console.log(res);

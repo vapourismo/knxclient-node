@@ -121,6 +121,8 @@ function TunnelClient(conf) {
 		disconnect: conf.disconnect || function() {}
 	};
 
+	this.sequenceNumber = 0;
+
 	this.sock = dgram.createSocket("udp4");
 	this.sock.on("message", TunnelClient.processMessage.bind(this));
 	this.sock.sendDatagram(this.conf.host, this.conf.port, proto.makeConnectionRequest());
