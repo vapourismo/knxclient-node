@@ -1,0 +1,3 @@
+[submodule "deps/jawra"]
+	path = deps/jawra
+	url = https://github.com/vapourismo/jawra.git
