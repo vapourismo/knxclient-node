@@ -19,10 +19,6 @@ function formatIndividualAddress(addr) {
 	return a + "." + b + "." + c;
 }
 
-// dgram.Socket.prototype.sendDatagram = function (address, port, buf, handler) {
-// 	return this.send(buf, 0, buf.length, port, address, handler);
-// };
-
 var MessagePrototype = {
 	asUnsigned8:  function () { return proto.parseUnsigned8(this.payload); },
 	asUnsigned16: function () { return proto.parseUnsigned16(this.payload); },
@@ -77,6 +73,11 @@ RouterClient.prototype = {
 				callback(sender, msg);
 			}
 		});
+	},
+
+	write: function (src, dest, payload) {
+		var buf = proto.makeRoutedWrite(src, dest, payload);
+		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.address);
 	}
 };
 
