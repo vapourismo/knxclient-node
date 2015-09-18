@@ -1,3 +1,5 @@
+#include "data.hpp"
+
 #include <string>
 #include <algorithm>
 
@@ -7,6 +9,7 @@
 
 #include <jawra/objects.hpp>
 #include <jawra/functions.hpp>
+#include <jawra/values.hpp>
 
 extern "C" {
 	#include <knxproto/proto/knxnetip.h>
@@ -103,6 +106,21 @@ void knxproto_init(Handle<Object> module) {
 
 	module_wrapper.set("makeRoutedWrite", JAWRA_WRAP_FUNCTION(knxproto_make_routed_write));
 	module_wrapper.set("parseRoutedWrite", JAWRA_WRAP_FUNCTION(knxproto_parse_routed_write));
+
+	module_wrapper.set("parseUnsigned8",  JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned8));
+	module_wrapper.set("parseUnsigned16", JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned16));
+	module_wrapper.set("parseUnsigned32", JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned32));
+	module_wrapper.set("parseSigned8",    JAWRA_WRAP_FUNCTION(knxproto_parse_signed8));
+	module_wrapper.set("parseSigned16",   JAWRA_WRAP_FUNCTION(knxproto_parse_signed16));
+	module_wrapper.set("parseSigned32",   JAWRA_WRAP_FUNCTION(knxproto_parse_signed32));
+	module_wrapper.set("parseFloat16",    JAWRA_WRAP_FUNCTION(knxproto_parse_float16));
+	module_wrapper.set("parseFloat32",    JAWRA_WRAP_FUNCTION(knxproto_parse_float32));
+	module_wrapper.set("parseBool",       JAWRA_WRAP_FUNCTION(knxproto_parse_bool));
+	module_wrapper.set("parseChar",       JAWRA_WRAP_FUNCTION(knxproto_parse_char));
+	module_wrapper.set("parseCValue",     JAWRA_WRAP_FUNCTION(knxproto_parse_cvalue));
+	module_wrapper.set("parseCStep",      JAWRA_WRAP_FUNCTION(knxproto_parse_cstep));
+	module_wrapper.set("parseTimeOfDay",  JAWRA_WRAP_FUNCTION(knxproto_parse_timeofday));
+	module_wrapper.set("parseDate",       JAWRA_WRAP_FUNCTION(knxproto_parse_date));
 }
 
 NODE_MODULE(knxproto, knxproto_init)
