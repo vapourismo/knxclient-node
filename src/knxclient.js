@@ -1,7 +1,7 @@
 var dgram = require("dgram");
 
 // TODO: Use 'bindings' package
-var proto = require("../build/Release/knxproto");
+var proto = require("bindings")("knxproto.node");
 
 function formatGroupAddress(addr) {
 	var a = (addr >> 11) & 15;

@@ -8,5 +8,8 @@
   },
   "author": "vapourismo",
   "license": "GPL-3.0",
-  "gypfile": true
+  "gypfile": true,
+  "dependencies": {
+    "bindings": "^1.2.1"
+  }
 }
