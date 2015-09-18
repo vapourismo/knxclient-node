@@ -1,6 +1,4 @@
 var dgram = require("dgram");
-
-// TODO: Use 'bindings' package
 var proto = require("bindings")("knxproto.node");
 
 function formatGroupAddress(addr) {
@@ -11,12 +9,26 @@ function formatGroupAddress(addr) {
 	return a + "/" + b + "/" + c;
 }
 
+function makeGroupAddress(a, b, c) {
+	return
+		((a & 15) << 11) |
+		((b & 7) << 8) |
+		(c & 255);
+}
+
 function formatIndividualAddress(addr) {
 	var a = (addr >> 12) & 15;
 	var b = (addr >> 8) & 15
 	var c = addr & 255;
 
 	return a + "." + b + "." + c;
+}
+
+function makeIndividualAddress(a, b, c) {
+	return
+		((a & 15) << 12) |
+		((b & 15) << 8) |
+		(c & 255);
 }
 
 var MessagePrototype = {
@@ -37,6 +49,8 @@ var MessagePrototype = {
 };
 
 function RouterClient(host, port) {
+	// When only one parameter is supplied, the first one can be used for either port number
+	// or host name
 	if (port == null) {
 		switch (typeof(host)) {
 			case "string":
@@ -50,11 +64,13 @@ function RouterClient(host, port) {
 		}
 	}
 
+	// We need this configuration to send messages
 	this.conf = {
 		host: host || "224.0.23.12",
 		port: port || 3671
 	};
 
+	// Create socket and add it to the router's multicast group
 	this.sock = dgram.createSocket("udp4");
 	this.sock.bind(this.conf.port, function () {
 		this.sock.addMembership(this.conf.host);
@@ -66,6 +82,8 @@ RouterClient.prototype = {
 	listen: function (callback) {
 		this.sock.on("message", function (packet, sender) {
 			var msg = proto.parseRoutedWrite(packet);
+
+			// The parser returns null, if the packet contents are invalid
 			if (msg) {
 				msg.__proto__ = MessagePrototype;
 				delete sender.size;
@@ -75,18 +93,25 @@ RouterClient.prototype = {
 		});
 	},
 
-	write: function (src, dest, payload) {
+	send: function (src, dest, payload) {
 		var buf = proto.makeRoutedWrite(src, dest, payload);
 		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.address);
 	}
 };
 
 module.exports = {
+	// Clients
 	RouterClient:            RouterClient,
 
+	// Individual address
 	formatIndividualAddress: formatIndividualAddress,
-	formatGroupAddress:      formatGroupAddress,
+	makeIndividualAddress:   makeIndividualAddress,
 
+	// Group address
+	formatGroupAddress:      formatGroupAddress,
+	makeGroupAddress:        makeGroupAddress,
+
+	// Payload generators
 	makeUnsigned8:           proto.makeUnsigned8,
 	makeUnsigned16:          proto.makeUnsigned16,
 	makeUnsigned32:          proto.makeUnsigned32,
