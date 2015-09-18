@@ -30,6 +30,9 @@ Handle<Object> make_buffer(char* buffer, size_t length) {
 
 static
 Handle<Value> knxproto_make_routed_write(uint32_t src, uint32_t dest, Buffer payload) {
+	if (!payload.data || payload.length < 1)
+		return Null(Isolate::GetCurrent());
+
 	knx_routing_indication ind = {{KNX_CEMI_LDATA_IND, 0, nullptr}};
 
 	ind.data.payload.ldata = {
