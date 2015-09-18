@@ -71,23 +71,23 @@ function RouterClient(host, port) {
 	};
 
 	// Create socket and add it to the router's multicast group
-	this.sock = dgram.createSocket("udp4");
+	this.sock = dgram.createSocket({type: "udp4", reuseAddr: true});
 	this.sock.bind(this.conf.port, function () {
 		this.sock.addMembership(this.conf.host);
 		this.sock.setMulticastLoopback(false);
 	}.bind(this));
+	this.sock.unref();
 }
 
 RouterClient.prototype = {
 	listen: function (callback) {
+		this.sock.ref();
 		this.sock.on("message", function (packet, sender) {
 			var msg = proto.parseRoutedWrite(packet);
 
 			// The parser returns null, if the packet contents are invalid
 			if (msg) {
 				msg.__proto__ = MessagePrototype;
-				delete sender.size;
-
 				callback(sender, msg);
 			}
 		});
@@ -96,6 +96,11 @@ RouterClient.prototype = {
 	send: function (src, dest, payload) {
 		var buf = proto.makeRoutedWrite(src, dest, payload);
 		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.address);
+	},
+
+	close: function () {
+		this.sock.dropMembership(this.conf.host);
+		this.sock.close();
 	}
 };
 
