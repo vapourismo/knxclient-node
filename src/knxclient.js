@@ -48,26 +48,18 @@ var MessagePrototype = {
 	asDate:       function () { return proto.parseDate(this.payload); }
 };
 
-function RouterClient(host, port) {
-	// When only one parameter is supplied, the first one can be used for either port number
-	// or host name
-	if (port == null) {
-		switch (typeof(host)) {
-			case "string":
-				port = 3671;
-				break;
-
-			case "number":
-				port = host;
-				host = "224.0.23.12";
-				break;
-		}
+function RouterClient(conf, callback) {
+	if (callback == null && typeof(conf) == "function") {
+		callback = conf;
+		conf = {};
+	} else {
+		conf = conf || {};
 	}
 
 	// We need this configuration to send messages
 	this.conf = {
-		host: host || "224.0.23.12",
-		port: port || 3671
+		host: conf.host || "224.0.23.12",
+		port: conf.port || 3671
 	};
 
 	// Create socket and add it to the router's multicast group
@@ -75,6 +67,8 @@ function RouterClient(host, port) {
 	this.sock.bind(this.conf.port, function () {
 		this.sock.addMembership(this.conf.host);
 		this.sock.setMulticastLoopback(false);
+
+		if (callback) callback.call(this);
 	}.bind(this));
 	this.sock.unref();
 }
@@ -95,7 +89,7 @@ RouterClient.prototype = {
 
 	send: function (src, dest, payload) {
 		var buf = proto.makeRoutedWrite(src, dest, payload);
-		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.address);
+		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.host);
 	},
 
 	close: function () {
