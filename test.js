@@ -2,59 +2,70 @@ var client = require("./src/knxclient.js")
 
 var rt = new client.RouterClient();
 rt.listen(function (sender, message) {
-	console.log(message);
-
 	switch (message.destination) {
 		case 5:
-			console.log("unsigned8(13)", message.asUnsigned8());
+			var value = message.asUnsigned8();
+			console.log(value, message.payload, client.makeUnsigned8(value));
 			break;
 
 		case 7:
-			console.log("unsigned16(37)", message.asUnsigned16());
+			var value = message.asUnsigned16();
+			console.log(value, message.payload, client.makeUnsigned16(value));
 			break;
 
 		case 12:
-			console.log("unsigned32(1337)", message.asUnsigned32());
+			var value = message.asUnsigned32();
+			console.log(value, message.payload, client.makeUnsigned32(value));
 			break;
 
 		case 6:
-			console.log("signed8(-13)", message.asSigned8());
+			var value = message.asSigned8();
+			console.log(value, message.payload, client.makeSigned8(value));
 			break;
 
 		case 8:
-			console.log("signed16(-37)", message.asSigned16());
+			var value = message.asSigned16();
+			console.log(value, message.payload, client.makeSigned16(value));
 			break;
 
 		case 13:
-			console.log("signed32(-1337)", message.asSigned32());
+			var value = message.asSigned32();
+			console.log(value, message.payload, client.makeSigned32(value));
 			break;
 
 		case 9:
-			console.log("float16(13.37)", message.asFloat16());
+			var value = message.asFloat16();
+			console.log(value, message.payload, client.makeFloat16(value));
 			break;
 
 		case 14:
-			console.log("float32(73.31)", message.asFloat32());
+			var value = message.asFloat32();
+			console.log(value, message.payload, client.makeFloat32(value));
 			break;
 
 		case 1:
-			console.log("bool(false)", message.asBool());
+			var value = message.asBool();
+			console.log(value, message.payload, client.makeBool(value));
 			break;
 
 		case 2:
-			console.log("cvalue(true, false)", message.asCValue());
+			var value = message.asCValue();
+			console.log(value, message.payload, client.makeCValue(value));
 			break;
 
 		case 3:
-			console.log("cstep(false, 2)", message.asCStep());
+			var value = message.asCStep();
+			console.log(value, message.payload, client.makeCStep(value));
 			break;
 
 		case 10:
-			console.log("timeofday(1, 2, 3, 4)", message.asTimeOfDay());
+			var value = message.asTimeOfDay();
+			console.log(value, message.payload, client.makeTimeOfDay(value));
 			break;
 
 		case 11:
-			console.log("date(4, 3, 2)", message.asDate());
+			var value = message.asDate();
+			console.log(value, message.payload, client.makeDate(value));
 			break;
 
 	}

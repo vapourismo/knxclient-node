@@ -121,6 +121,21 @@ void knxproto_init(Handle<Object> module) {
 	module_wrapper.set("parseCStep",      JAWRA_WRAP_FUNCTION(knxproto_parse_cstep));
 	module_wrapper.set("parseTimeOfDay",  JAWRA_WRAP_FUNCTION(knxproto_parse_timeofday));
 	module_wrapper.set("parseDate",       JAWRA_WRAP_FUNCTION(knxproto_parse_date));
+
+	module_wrapper.set("makeUnsigned8",  JAWRA_WRAP_FUNCTION(knxproto_make_unsigned8));
+	module_wrapper.set("makeUnsigned16", JAWRA_WRAP_FUNCTION(knxproto_make_unsigned16));
+	module_wrapper.set("makeUnsigned32", JAWRA_WRAP_FUNCTION(knxproto_make_unsigned32));
+	module_wrapper.set("makeSigned8",    JAWRA_WRAP_FUNCTION(knxproto_make_signed8));
+	module_wrapper.set("makeSigned16",   JAWRA_WRAP_FUNCTION(knxproto_make_signed16));
+	module_wrapper.set("makeSigned32",   JAWRA_WRAP_FUNCTION(knxproto_make_signed32));
+	module_wrapper.set("makeFloat16",    JAWRA_WRAP_FUNCTION(knxproto_make_float16));
+	module_wrapper.set("makeFloat32",    JAWRA_WRAP_FUNCTION(knxproto_make_float32));
+	module_wrapper.set("makeBool",       JAWRA_WRAP_FUNCTION(knxproto_make_bool));
+	module_wrapper.set("makeChar",       JAWRA_WRAP_FUNCTION(knxproto_make_char));
+	module_wrapper.set("makeCValue",     JAWRA_WRAP_FUNCTION(knxproto_make_cvalue));
+	module_wrapper.set("makeCStep",      JAWRA_WRAP_FUNCTION(knxproto_make_cstep));
+	module_wrapper.set("makeTimeOfDay",  JAWRA_WRAP_FUNCTION(knxproto_make_timeofday));
+	module_wrapper.set("makeDate",       JAWRA_WRAP_FUNCTION(knxproto_make_date));
 }
 
 NODE_MODULE(knxproto, knxproto_init)

@@ -83,6 +83,22 @@ RouterClient.prototype = {
 
 module.exports = {
 	RouterClient:            RouterClient,
+
 	formatIndividualAddress: formatIndividualAddress,
-	formatGroupAddress:      formatGroupAddress
+	formatGroupAddress:      formatGroupAddress,
+
+	makeUnsigned8:           proto.makeUnsigned8,
+	makeUnsigned16:          proto.makeUnsigned16,
+	makeUnsigned32:          proto.makeUnsigned32,
+	makeSigned8:             proto.makeSigned8,
+	makeSigned16:            proto.makeSigned16,
+	makeSigned32:            proto.makeSigned32,
+	makeFloat16:             proto.makeFloat16,
+	makeFloat32:             proto.makeFloat32,
+	makeBool:                proto.makeBool,
+	makeChar:                proto.makeChar,
+	makeCValue:              proto.makeCValue,
+	makeCStep:               proto.makeCStep,
+	makeTimeOfDay:           proto.makeTimeOfDay,
+	makeDate:                proto.makeDate
 };
