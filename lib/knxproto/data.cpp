@@ -6,14 +6,12 @@
 using namespace jawra;
 using namespace v8;
 
-static
-void free_buffer(char* buffer, void*) {
+void knxproto_free_buffer(char* buffer, void*) {
 	delete[] buffer;
 }
 
-static
-Handle<Object> make_buffer(char* buffer, size_t length) {
-	return node::Buffer::New(Isolate::GetCurrent(), buffer, length, free_buffer, nullptr);
+Handle<Object> knxproto_make_buffer(char* buffer, size_t length) {
+	return node::Buffer::New(Isolate::GetCurrent(), buffer, length, knxproto_free_buffer, nullptr);
 }
 
 #define KNXPROTO_PARSE_APDU_DEF(n, c, r) KNXPROTO_PARSE_APDU_DECL(n) { \
@@ -50,7 +48,7 @@ KNXPROTO_PARSE_APDU_DEF(date,       KNX_DPT_DATE,       knx_date)
 	char* buffer = new char[length]; \
 	std::fill(buffer, buffer + length, 0); \
 	knx_dpt_to_apdu((uint8_t*) buffer, c, &value); \
-	return make_buffer(buffer, length); \
+	return knxproto_make_buffer(buffer, length); \
 }
 
 #define KNXPROTO_MAKE_APDU_DEF(n, c, t) KNXPROTO_MAKE_APDU_DECL(n, t) { \
@@ -59,7 +57,7 @@ KNXPROTO_PARSE_APDU_DEF(date,       KNX_DPT_DATE,       knx_date)
 	std::fill(buffer, buffer + length, 0); \
 	knx_##n value2 = (knx_##n) value; \
 	knx_dpt_to_apdu((uint8_t*) buffer, c, &value2); \
-	return make_buffer(buffer, length); \
+	return knxproto_make_buffer(buffer, length); \
 }
 
 KNXPROTO_MAKE_APDU_DEF(unsigned8,  KNX_DPT_UNSIGNED8,  uint32_t)

@@ -19,16 +19,6 @@ using namespace jawra;
 using namespace v8;
 
 static
-void free_buffer(char* buffer, void*) {
-	delete[] buffer;
-}
-
-static
-Handle<Object> make_buffer(char* buffer, size_t length) {
-	return node::Buffer::New(Isolate::GetCurrent(), buffer, length, free_buffer, nullptr);
-}
-
-static
 Handle<Value> knxproto_make_routed_write(uint32_t src, uint32_t dest, Buffer payload) {
 	if (!payload.data || payload.length < 1)
 		return Null(Isolate::GetCurrent());
@@ -53,7 +43,7 @@ Handle<Value> knxproto_make_routed_write(uint32_t src, uint32_t dest, Buffer pay
 	char* buffer = new char[length];
 	knx_generate((uint8_t*) buffer, KNX_ROUTING_INDICATION, &ind);
 
-	return make_buffer(buffer, length);
+	return knxproto_make_buffer(buffer, length);
 }
 
 static
@@ -83,7 +73,7 @@ Handle<Value> knxproto_obj_routed_cemi(const knx_cemi& cemi) {
 	if (ldata.tpdu.info.data.length > 0)
 		payload_copy[0] &= 63;
 
-	Handle<Value> payload_buffer = make_buffer(payload_copy, ldata.tpdu.info.data.length);
+	Handle<Value> payload_buffer = knxproto_make_buffer(payload_copy, ldata.tpdu.info.data.length);
 	result.set("payload", payload_buffer);
 
 	return result;
