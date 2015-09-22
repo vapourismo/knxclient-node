@@ -68,7 +68,9 @@ function RouterClient(conf, callback) {
 		this.sock.addMembership(this.conf.host);
 		this.sock.setMulticastLoopback(false);
 
-		if (callback) callback.call(this);
+		if (typeof(callback) == "function") {
+			callback.call(this);
+		}
 	}.bind(this));
 	this.sock.unref();
 }
