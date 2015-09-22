@@ -48,13 +48,8 @@ var MessagePrototype = {
 	asDate:       function () { return proto.parseDate(this.payload); }
 };
 
-function RouterClient(conf, callback) {
-	if (callback == null && typeof(conf) == "function") {
-		callback = conf;
-		conf = {};
-	} else {
-		conf = conf || {};
-	}
+function RouterClient(conf) {
+	conf = conf || {};
 
 	// We need this configuration to send messages
 	this.conf = {
@@ -67,10 +62,6 @@ function RouterClient(conf, callback) {
 	this.sock.bind(this.conf.port, function () {
 		this.sock.addMembership(this.conf.host);
 		this.sock.setMulticastLoopback(false);
-
-		if (typeof(callback) == "function") {
-			callback.call(this);
-		}
 	}.bind(this));
 	this.sock.unref();
 }
