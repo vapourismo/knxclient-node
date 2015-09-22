@@ -8,13 +8,8 @@
   ],
   "license": "UNLICENSED",
   "private": true,
-  "files": [
-    "src/",
-    "lib/",
-    "deps/"
-  ],
   "main": "src/knxclient.js",
-  "scritpts": {
+  "scripts": {
     "install": "node-gyp rebuild"
   },
   "dependencies": {
