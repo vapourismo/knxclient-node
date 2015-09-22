@@ -1,0 +1,26 @@
+{
+  "name": "knxclient",
+  "version": "0.0.0-dev",
+  "description": "KNX client library",
+  "keywords": [
+    "knx",
+    "eib"
+  ],
+  "license": "UNLICENSED",
+  "private": true,
+  "files": [
+    "src/",
+    "lib/",
+    "deps/"
+  ],
+  "main": "src/knxclient.js",
+  "scritpts": {
+    "install": "node-gyp rebuild"
+  },
+  "dependencies": {
+    "bindings": "^1.2.1"
+  },
+  "engines": {
+    "node": "^4.1.0"
+  }
+}
