@@ -1,6 +1,7 @@
 #include "data.hpp"
 
 #include <algorithm>
+
 #include <node_buffer.h>
 
 using namespace jawra;
@@ -10,8 +11,14 @@ void knxproto_free_buffer(char* buffer, void*) {
 	delete[] buffer;
 }
 
-Handle<Object> knxproto_make_buffer(char* buffer, size_t length) {
-	return node::Buffer::New(Isolate::GetCurrent(), buffer, length, knxproto_free_buffer, nullptr);
+Handle<Value> knxproto_make_buffer(char* buffer, size_t length) {
+	Isolate* isolate = Isolate::GetCurrent();
+	auto mb = node::Buffer::New(isolate, buffer, length, knxproto_free_buffer, nullptr);
+
+	if (mb.IsEmpty())
+		return Null(isolate);
+	else
+		return mb.ToLocalChecked();
 }
 
 #define KNXPROTO_PARSE_APDU_DEF(n, c, r) KNXPROTO_PARSE_APDU_DECL(n) { \

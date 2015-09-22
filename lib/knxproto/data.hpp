@@ -11,7 +11,7 @@ extern "C" {
 
 void knxproto_free_buffer(char* buffer, void*);
 
-v8::Handle<v8::Object> knxproto_make_buffer(char* buffer, size_t length);
+v8::Handle<v8::Value> knxproto_make_buffer(char* buffer, size_t length);
 
 namespace jawra {
 	template <>

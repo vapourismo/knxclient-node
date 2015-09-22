@@ -6,7 +6,6 @@
 #include <node.h>
 #include <node_buffer.h>
 #include <arpa/inet.h>
-
 #include <jawra/objects.hpp>
 #include <jawra/functions.hpp>
 #include <jawra/values.hpp>
