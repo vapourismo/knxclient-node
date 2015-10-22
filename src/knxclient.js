@@ -13,7 +13,7 @@ function makeGroupAddress(a, b, c) {
 	return (
 		((a & 15) << 11) |
 		((b & 7) << 8) |
-		(c & 255);
+		(c & 255)
 	);
 }
 
@@ -29,7 +29,7 @@ function makeIndividualAddress(a, b, c) {
 	return (
 		((a & 15) << 12) |
 		((b & 15) << 8) |
-		(c & 255);
+		(c & 255)
 	);
 }
 
