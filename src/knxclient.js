@@ -10,10 +10,11 @@ function formatGroupAddress(addr) {
 }
 
 function makeGroupAddress(a, b, c) {
-	return
+	return (
 		((a & 15) << 11) |
 		((b & 7) << 8) |
 		(c & 255);
+	);
 }
 
 function formatIndividualAddress(addr) {
@@ -25,10 +26,11 @@ function formatIndividualAddress(addr) {
 }
 
 function makeIndividualAddress(a, b, c) {
-	return
+	return (
 		((a & 15) << 12) |
 		((b & 15) << 8) |
 		(c & 255);
+	);
 }
 
 var MessagePrototype = {
