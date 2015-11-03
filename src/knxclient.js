@@ -67,7 +67,6 @@ function Router(host, port) {
 
 	this.ext = proto.createRouter(
 		function (buf) {
-			console.log("router >", buf);
 			this.sock.send(buf, 0, buf.length, this.port, this.host);
 		}.bind(this),
 
@@ -86,7 +85,6 @@ function Router(host, port) {
 	}.bind(this));
 
 	this.sock.on("message", function (msg) {
-		console.log("router <", msg);
 		if (this.ext) proto.processRouter(this.ext, msg);
 	}.bind(this));
 
@@ -123,7 +121,6 @@ function Tunnel(host, port) {
 		this.emit.bind(this, "state"),
 
 		function (buf) {
-			console.log("tunnel >", buf);
 			this.sock.send(buf, 0, buf.length, this.port, this.host);
 		}.bind(this),
 
@@ -140,7 +137,6 @@ function Tunnel(host, port) {
 	this.sock = dgram.createSocket({type: "udp4", reuseAddr: true});
 
 	this.sock.on("message", function (msg) {
-		console.log("tunnel <", msg);
 		if (this.ext) proto.processTunnel(this.ext, msg);
 	}.bind(this));
 
