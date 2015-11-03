@@ -3,8 +3,8 @@
 		{
 			"target_name": "knxproto",
 			"sources": [
-				"lib/knxproto/knxproto.cpp",
-				"lib/knxproto/data.cpp"
+				"lib/knxproto.cpp",
+				"lib/data.cpp",
 			],
 			"cflags": [
 				"-std=c++14",

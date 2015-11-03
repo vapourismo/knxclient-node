@@ -1,5 +1,5 @@
-#ifndef KNXPROTO_NODE_DATA_H_
-#define KNXPROTO_NODE_DATA_H_
+#ifndef KNXPROTO_LIB_DATA_H_
+#define KNXPROTO_LIB_DATA_H_
 
 extern "C" {
 	#include <knxproto/proto/data.h>

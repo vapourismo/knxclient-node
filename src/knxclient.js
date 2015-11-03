@@ -34,20 +34,20 @@ function makeIndividualAddress(a, b, c) {
 }
 
 var MessagePrototype = {
-	asUnsigned8:  function () { return proto.parseUnsigned8(this.payload); },
-	asUnsigned16: function () { return proto.parseUnsigned16(this.payload); },
-	asUnsigned32: function () { return proto.parseUnsigned32(this.payload); },
-	asSigned8:    function () { return proto.parseSigned8(this.payload); },
-	asSigned16:   function () { return proto.parseSigned16(this.payload); },
-	asSigned32:   function () { return proto.parseSigned32(this.payload); },
-	asFloat16:    function () { return proto.parseFloat16(this.payload); },
-	asFloat32:    function () { return proto.parseFloat32(this.payload); },
-	asBool:       function () { return proto.parseBool(this.payload); },
-	asChar:       function () { return proto.parseChar(this.payload); },
-	asCValue:     function () { return proto.parseCValue(this.payload); },
-	asCStep:      function () { return proto.parseCStep(this.payload); },
-	asTimeOfDay:  function () { return proto.parseTimeOfDay(this.payload); },
-	asDate:       function () { return proto.parseDate(this.payload); }
+	asUnsigned8:  function () { return proto.parseUnsigned8(this.data); },
+	asUnsigned16: function () { return proto.parseUnsigned16(this.data); },
+	asUnsigned32: function () { return proto.parseUnsigned32(this.data); },
+	asSigned8:    function () { return proto.parseSigned8(this.data); },
+	asSigned16:   function () { return proto.parseSigned16(this.data); },
+	asSigned32:   function () { return proto.parseSigned32(this.data); },
+	asFloat16:    function () { return proto.parseFloat16(this.data); },
+	asFloat32:    function () { return proto.parseFloat32(this.data); },
+	asBool:       function () { return proto.parseBool(this.data); },
+	asChar:       function () { return proto.parseChar(this.data); },
+	asCValue:     function () { return proto.parseCValue(this.data); },
+	asCStep:      function () { return proto.parseCStep(this.data); },
+	asTimeOfDay:  function () { return proto.parseTimeOfDay(this.data); },
+	asDate:       function () { return proto.parseDate(this.data); }
 };
 
 function RouterClient(conf) {
@@ -72,10 +72,10 @@ RouterClient.prototype = {
 	listen: function (callback) {
 		this.sock.ref();
 		this.sock.on("message", function (packet, sender) {
-			var msg = proto.parseRoutedWrite(packet);
+			var msg = proto.processRouted(packet);
 
 			// The parser returns null, if the packet contents are invalid
-			if (msg) {
+			if (msg && msg.apci == 2) {
 				msg.__proto__ = MessagePrototype;
 				callback(sender, msg);
 			}
@@ -83,7 +83,7 @@ RouterClient.prototype = {
 	},
 
 	send: function (src, dest, payload) {
-		var buf = proto.makeRoutedWrite(src, dest, payload);
+		var buf = proto.makeRouted(src, dest, payload);
 		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.host);
 	},
 
