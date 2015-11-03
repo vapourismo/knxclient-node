@@ -1,5 +1,10 @@
-var dgram = require("dgram");
-var proto = require("bindings")("knxproto.node");
+var EventEmitter = require("events");
+var dgram        = require("dgram");
+var proto        = require("bindings")("knxproto.node");
+
+///////////////
+// Utilities //
+///////////////
 
 function formatGroupAddress(addr) {
 	var a = (addr >> 11) & 15;
@@ -50,74 +55,147 @@ var MessagePrototype = {
 	asDate:       function () { return proto.parseDate(this.data); }
 };
 
-function RouterClient(conf) {
-	conf = conf || {};
+///////////////////
+// Router client //
+///////////////////
 
-	// We need this configuration to send messages
-	this.conf = {
-		host: conf.host || "224.0.23.12",
-		port: conf.port || 3671
-	};
+function Router(host, port) {
+	EventEmitter.prototype.constructor.call(this);
 
-	// Create socket and add it to the router's multicast group
+	this.host = host || "224.0.23.12",
+	this.port = port || 3671
+
+	this.ext = proto.createRouter(
+		function (buf) {
+			console.log("router >", buf);
+			this.sock.send(buf, 0, buf.length, this.port, this.host);
+		}.bind(this),
+
+		function (msg) {
+			if (!msg) return;
+
+			msg.__proto__ = MessagePrototype;
+			this.emit("message", msg);
+		}.bind(this)
+	);
+
 	this.sock = dgram.createSocket({type: "udp4", reuseAddr: true});
-	this.sock.bind(this.conf.port, function () {
-		this.sock.addMembership(this.conf.host);
+	this.sock.bind(this.port, function () {
+		this.sock.addMembership(this.host);
 		this.sock.setMulticastLoopback(false);
 	}.bind(this));
-	this.sock.unref();
+
+	this.sock.on("message", function (msg) {
+		console.log("router <", msg);
+		if (this.ext) proto.processRouter(this.ext, msg);
+	}.bind(this));
+
+	this.sock.on("close", function () {
+		if (!this.ext) return;
+
+		proto.disposeRouter(this.ext);
+		this.ext = null;
+	}.bind(this));
 }
 
-RouterClient.prototype = {
-	listen: function (callback) {
-		this.sock.ref();
-		this.sock.on("message", function (packet, sender) {
-			var msg = proto.processRouted(packet);
+Router.prototype.__proto__ = EventEmitter.prototype;
 
-			// The parser returns null, if the packet contents are invalid
-			if (msg && msg.apci == 2) {
-				msg.__proto__ = MessagePrototype;
-				callback(sender, msg);
-			}
-		});
-	},
-
-	send: function (src, dest, payload) {
-		var buf = proto.makeRouted(src, dest, payload);
-		this.sock.send(buf, 0, buf.length, this.conf.port, this.conf.host);
-	},
-
-	close: function () {
-		this.sock.dropMembership(this.conf.host);
-		this.sock.close();
-	}
+Router.prototype.write = function (src, dest, payload) {
+	if (this.ext) return proto.writeRouter(this.ext, src, dest, payload);
 };
 
+Router.prototype.dispose = function () {
+	this.sock.dropMembership(this.host);
+	this.sock.close();
+};
+
+///////////////////
+// Tunnel client //
+///////////////////
+
+function Tunnel(host, port) {
+	EventEmitter.prototype.constructor.call(this);
+
+	this.host = host || "localhost";
+	this.port = port || 3671;
+
+	this.ext = proto.createTunnel(
+		this.emit.bind(this, "state"),
+
+		function (buf) {
+			console.log("tunnel >", buf);
+			this.sock.send(buf, 0, buf.length, this.port, this.host);
+		}.bind(this),
+
+		function (msg) {
+			if (!msg) return;
+
+			msg.__proto__ = MessagePrototype;
+			this.emit("message", msg);
+		}.bind(this),
+
+		this.emit.bind(this, "ack")
+	);
+
+	this.sock = dgram.createSocket({type: "udp4", reuseAddr: true});
+
+	this.sock.on("message", function (msg) {
+		console.log("tunnel <", msg);
+		if (this.ext) proto.processTunnel(this.ext, msg);
+	}.bind(this));
+
+	this.sock.on("close", function () {
+		if (!this.ext) return;
+
+		proto.disposeTunnel(this.ext);
+		this.ext = null;
+	}.bind(this));
+}
+
+Tunnel.prototype.__proto__ = EventEmitter.prototype;
+
+Tunnel.prototype.connect = function () {
+	if (this.ext) proto.connectTunnel(this.ext);
+};
+
+Tunnel.prototype.disconnect = function () {
+	if (this.ext) proto.disconnectTunnel(this.ext);
+};
+
+Tunnel.prototype.dispose = function () {
+	this.sock.close();
+};
+
+Tunnel.prototype.write = function (src, dest, payload, ack) {
+	if (this.ext) return proto.writeTunnel(this.ext, src, dest, payload, !!ack);
+};
+
+/////////////
+// Exports //
+/////////////
+
 module.exports = {
-	// Clients
-	RouterClient:            RouterClient,
-
-	// Individual address
+	Router:                  Router,
+	Tunnel:                  Tunnel,
 	formatIndividualAddress: formatIndividualAddress,
-	makeIndividualAddress:   makeIndividualAddress,
-
-	// Group address
 	formatGroupAddress:      formatGroupAddress,
-	makeGroupAddress:        makeGroupAddress,
-
-	// Payload generators
-	makeUnsigned8:           proto.makeUnsigned8,
-	makeUnsigned16:          proto.makeUnsigned16,
-	makeUnsigned32:          proto.makeUnsigned32,
-	makeSigned8:             proto.makeSigned8,
-	makeSigned16:            proto.makeSigned16,
-	makeSigned32:            proto.makeSigned32,
-	makeFloat16:             proto.makeFloat16,
-	makeFloat32:             proto.makeFloat32,
-	makeBool:                proto.makeBool,
-	makeChar:                proto.makeChar,
-	makeCValue:              proto.makeCValue,
-	makeCStep:               proto.makeCStep,
-	makeTimeOfDay:           proto.makeTimeOfDay,
-	makeDate:                proto.makeDate
+	IndividualAddress:       makeIndividualAddress,
+	GroupAddress:            makeGroupAddress,
+	Unsigned8:               proto.makeUnsigned8,
+	Unsigned16:              proto.makeUnsigned16,
+	Unsigned32:              proto.makeUnsigned32,
+	Signed8:                 proto.makeSigned8,
+	Signed16:                proto.makeSigned16,
+	Signed32:                proto.makeSigned32,
+	Float16:                 proto.makeFloat16,
+	Float32:                 proto.makeFloat32,
+	Bool:                    proto.makeBool,
+	Char:                    proto.makeChar,
+	CValue:                  proto.makeCValue,
+	CStep:                   proto.makeCStep,
+	TimeOfDay:               proto.makeTimeOfDay,
+	Date:                    proto.makeDate,
+	LDataRequest:            proto.LDataRequest,
+	LDataConfirmation:       proto.LDataConfirmation,
+	LDataIndication:         proto.LDataIndication,
 };
