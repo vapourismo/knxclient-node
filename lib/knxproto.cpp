@@ -368,6 +368,14 @@ struct TunnelWrapper {
 	}
 
 	static
+	bool resend(void* tunnel, uint32_t seq_no, knx_cemi cemi) {
+		if (!tunnel) return false;
+
+		TunnelWrapper* wrapper = (TunnelWrapper*) tunnel;
+		return knx_tunnel_resend(&wrapper->tunnel, seq_no, &cemi);
+	}
+
+	static
 	void disconnect(void* tunnel) {
 		if (!tunnel) return;
 
@@ -473,6 +481,7 @@ void knxproto_init(Handle<Object> module) {
 	module_wrapper.set("disconnectTunnel", JAWRA_WRAP_FUNCTION(TunnelWrapper::disconnect));
 	module_wrapper.set("processTunnel",    JAWRA_WRAP_FUNCTION(TunnelWrapper::process));
 	module_wrapper.set("sendTunnel",       JAWRA_WRAP_FUNCTION(TunnelWrapper::m_send));
+	module_wrapper.set("resendTunnel",     JAWRA_WRAP_FUNCTION(TunnelWrapper::resend));
 
 	// Parsers
 	module_wrapper.set("unpackUnsigned8",  JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned8));
