@@ -48,8 +48,6 @@ function Router(host, port) {
 		function (msg) {
 			if (!msg) return;
 
-			this.emit("message", msg);
-
 			if (msg.service == proto.LDataIndication)
 				this.emit("indication", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
 			else if (msg.service == proto.LDataConfirmation)
@@ -105,14 +103,96 @@ Router.prototype.dispose = function () {
 // Tunnel client //
 ///////////////////
 
+function OutboundQueue(send, resend) {
+	this.idle = true;
+	this.outbound = [];
+
+	this.send = send;
+	this.resend = resend;
+}
+
+OutboundQueue.prototype.queue = function (msg) {
+	this.outbound.unshift(msg);
+
+	if (this.idle) {
+		this.info = this.send(this.outbound[this.outbound.length - 1]);
+		this.idle = false;
+		this.resetInterval();
+	}
+};
+
+OutboundQueue.prototype.confirm = function () {
+	var item = this.outbound.pop();
+
+	if (this.outbound.length == 0) {
+		this.idle = true;
+	} else {
+		this.info = this.send(this.outbound[this.outbound.length - 1]);
+		this.idle = false;
+		this.resetInterval();
+	}
+
+	return item;
+};
+
+OutboundQueue.prototype.resetInterval = function () {
+	if (this.interval)
+		clearInterval(this.interval);
+
+	this.interval = setInterval(function () {
+		if (this.outbound.length > 0)
+			this.resend(this.info, this.outbound[this.outbound.length - 1]);
+	}.bind(this), 1000);
+};
+
+OutboundQueue.prototype.clearInterval = function () {
+	if (this.interval)
+		clearInterval(this.interval);
+
+	this.interval = null;
+};
+
 function Tunnel(host, port) {
 	EventEmitter.prototype.constructor.call(this);
 
 	this.host = host || "localhost";
 	this.port = port || 3671;
 
+	this.outbound = new OutboundQueue(
+		function (cemi) {
+			if (this.ext) {
+				var no = proto.sendTunnel(this.ext, cemi);
+				return no;
+			}
+		}.bind(this),
+
+		function (no, cemi) {
+			if (this.ext && no != null) {
+				proto.resendTunnel(this.ext, no, cemi);
+			}
+		}.bind(this)
+	);
+
 	this.ext = proto.createTunnel(
-		this.emit.bind(this, "state"),
+		function (state) {
+			switch (state) {
+				case 0:
+					this.emit("connecting");
+					break;
+
+				case 1:
+					this.emit("connected");
+					break;
+
+				case 2:
+					this.emit("disconnecting");
+					break;
+
+				case 3:
+					this.emit("disconnected");
+					break;
+			}
+		}.bind(this),
 
 		function (buf) {
 			this.sock.send(buf, 0, buf.length, this.port, this.host);
@@ -121,15 +201,15 @@ function Tunnel(host, port) {
 		function (msg) {
 			if (!msg) return;
 
-			this.emit("message", msg);
-
 			if (msg.service == proto.LDataIndication)
-				this.emit("indication", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
+				this.emit("indication", msg.payload.source, msg.payload.destination, msg.payload.tpdu, msg);
 			else if (msg.service == proto.LDataConfirmation)
-				this.emit("confirmation", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
+				this.emit("confirmation", msg.payload.source, msg.payload.destination, msg.payload.tpdu, msg);
 		}.bind(this),
 
-		this.emit.bind(this, "ack")
+		function (no) {
+			this.outbound.confirm();
+		}.bind(this)
 	);
 
 	this.sock = dgram.createSocket({type: "udp4", reuseAddr: true});
@@ -161,8 +241,8 @@ Tunnel.prototype.dispose = function () {
 };
 
 Tunnel.prototype.send = function (cemi) {
-	if (this.ext) return proto.sendTunnel(this.ext, cemi);
-}
+	return this.outbound.queue(cemi);
+};
 
 Tunnel.prototype.write = function (src, dest, payload) {
 	return this.send({

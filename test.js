@@ -1,36 +1,31 @@
 var k = require("./src/knxclient.js")
 
-var router = new k.Router();
-
-router.on("indication", function (src, dest, data) {
-	var value = k.unpackUnsigned16(data.payload);
-	console.log("router", value);
-
-	router.write(0, dest, k.packUnsigned16(value * 2));
-});
-
 var tunnel = new k.Tunnel("10.0.0.10", 3671);
 
-tunnel.on("state", function (state) {
-	console.log("state", state);
+tunnel.on("connected", function () {
+	for (var i = 0; i < 256; i++) {
+		var value = Math.round(Math.random() * 65535);
+		var data = k.packUnsigned16(value);
 
-	switch (state) {
-		case 1:
-			tunnel.write(0, 2563, k.packUnsigned16(42));
-			break;
+		var cemi = {
+			service: k.LDataRequest,
+			payload: {
+				source: 0,
+				destination: i,
+				tpdu: {
+					tpci: k.UnnumberedData,
+					apci: k.GroupValueWrite,
+					payload: data
+				}
+			}
+		};
 
-		case 3:
-			tunnel.dispose();
-			router.dispose();
-			break;
+		tunnel.send(cemi);
 	}
 });
 
-tunnel.on("indication", function (src, dest, data) {
-	var value = k.unpackUnsigned16(data.payload);
-	console.log("tunnel", value);
-
-	tunnel.disconnect();
+tunnel.on("confirmation", function (s, d, t) {
+	console.log("confirm", d);
 });
 
 tunnel.connect();
