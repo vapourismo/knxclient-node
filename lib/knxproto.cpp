@@ -317,15 +317,18 @@ void knxproto_init(Handle<Object> module) {
 	Isolate* isolate = Isolate::GetCurrent();
 	ObjectWrapper module_wrapper(isolate, module);
 
+	// Constants
 	module_wrapper.set("LDataRequest",      (uint32_t) KNX_CEMI_LDATA_REQ);
 	module_wrapper.set("LDataConfirmation", (uint32_t) KNX_CEMI_LDATA_CON);
 	module_wrapper.set("LDataIndication",   (uint32_t) KNX_CEMI_LDATA_IND);
 
+	// Router
 	module_wrapper.set("createRouter",  JAWRA_WRAP_FUNCTION(RouterWrapper::create));
 	module_wrapper.set("disposeRouter", JAWRA_WRAP_FUNCTION(RouterWrapper::dispose));
 	module_wrapper.set("processRouter", JAWRA_WRAP_FUNCTION(RouterWrapper::process));
 	module_wrapper.set("writeRouter",   JAWRA_WRAP_FUNCTION(RouterWrapper::write));
 
+	// Tunnel
 	module_wrapper.set("createTunnel",     JAWRA_WRAP_FUNCTION(TunnelWrapper::create));
 	module_wrapper.set("disposeTunnel",    JAWRA_WRAP_FUNCTION(TunnelWrapper::dispose));
 	module_wrapper.set("connectTunnel",    JAWRA_WRAP_FUNCTION(TunnelWrapper::connect));
@@ -333,6 +336,7 @@ void knxproto_init(Handle<Object> module) {
 	module_wrapper.set("processTunnel",    JAWRA_WRAP_FUNCTION(TunnelWrapper::process));
 	module_wrapper.set("writeTunnel",      JAWRA_WRAP_FUNCTION(TunnelWrapper::write));
 
+	// Parsers
 	module_wrapper.set("parseUnsigned8",  JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned8));
 	module_wrapper.set("parseUnsigned16", JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned16));
 	module_wrapper.set("parseUnsigned32", JAWRA_WRAP_FUNCTION(knxproto_parse_unsigned32));
@@ -348,6 +352,7 @@ void knxproto_init(Handle<Object> module) {
 	module_wrapper.set("parseTimeOfDay",  JAWRA_WRAP_FUNCTION(knxproto_parse_timeofday));
 	module_wrapper.set("parseDate",       JAWRA_WRAP_FUNCTION(knxproto_parse_date));
 
+	// Generators
 	module_wrapper.set("makeUnsigned8",  JAWRA_WRAP_FUNCTION(knxproto_make_unsigned8));
 	module_wrapper.set("makeUnsigned16", JAWRA_WRAP_FUNCTION(knxproto_make_unsigned16));
 	module_wrapper.set("makeUnsigned32", JAWRA_WRAP_FUNCTION(knxproto_make_unsigned32));
