@@ -2,16 +2,21 @@ var k = require("./src/knxclient.js")
 
 var router = new k.Router();
 
-router.on("message", function (msg) {
-	router.write(0, msg.destination, k.Unsigned16(msg.asUnsigned16() * 2));
+router.on("indication", function (src, dest, data) {
+	var value = k.unpackUnsigned16(data.payload);
+	console.log("router", value);
+
+	router.write(0, dest, k.packUnsigned16(value * 2));
 });
 
-var tunnel = new k.Tunnel("10.0.0.7", 3671);
+var tunnel = new k.Tunnel("10.0.0.10", 3671);
 
 tunnel.on("state", function (state) {
+	console.log("state", state);
+
 	switch (state) {
 		case 1:
-			tunnel.write(0, 2563, k.Unsigned16(42), false);
+			tunnel.write(0, 2563, k.packUnsigned16(42));
 			break;
 
 		case 3:
@@ -21,8 +26,10 @@ tunnel.on("state", function (state) {
 	}
 });
 
-tunnel.on("message", function (msg) {
-	if (msg.service != k.LDataIndication) return;
+tunnel.on("indication", function (src, dest, data) {
+	var value = k.unpackUnsigned16(data.payload);
+	console.log("tunnel", value);
+
 	tunnel.disconnect();
 });
 

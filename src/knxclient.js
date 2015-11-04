@@ -6,15 +6,11 @@ var proto        = require("bindings")("knxproto.node");
 // Utilities //
 ///////////////
 
-function formatGroupAddress(addr) {
-	var a = (addr >> 11) & 15;
-	var b = (addr >> 8) & 7
-	var c = addr & 255;
-
-	return a + "/" + b + "/" + c;
+function unpackGroup(addr) {
+	return [(addr >> 11) & 15, (addr >> 8) & 7, addr & 255];
 }
 
-function makeGroupAddress(a, b, c) {
+function packGroup(a, b, c) {
 	return (
 		((a & 15) << 11) |
 		((b & 7) << 8) |
@@ -22,38 +18,17 @@ function makeGroupAddress(a, b, c) {
 	);
 }
 
-function formatIndividualAddress(addr) {
-	var a = (addr >> 12) & 15;
-	var b = (addr >> 8) & 15
-	var c = addr & 255;
-
-	return a + "." + b + "." + c;
+function unpackIndividual(addr) {
+	return [(addr >> 12) & 15, (addr >> 8) & 15, addr & 255];
 }
 
-function makeIndividualAddress(a, b, c) {
+function packIndividual(a, b, c) {
 	return (
 		((a & 15) << 12) |
 		((b & 15) << 8) |
 		(c & 255)
 	);
 }
-
-var MessagePrototype = {
-	asUnsigned8:  function () { return proto.parseUnsigned8(this.data); },
-	asUnsigned16: function () { return proto.parseUnsigned16(this.data); },
-	asUnsigned32: function () { return proto.parseUnsigned32(this.data); },
-	asSigned8:    function () { return proto.parseSigned8(this.data); },
-	asSigned16:   function () { return proto.parseSigned16(this.data); },
-	asSigned32:   function () { return proto.parseSigned32(this.data); },
-	asFloat16:    function () { return proto.parseFloat16(this.data); },
-	asFloat32:    function () { return proto.parseFloat32(this.data); },
-	asBool:       function () { return proto.parseBool(this.data); },
-	asChar:       function () { return proto.parseChar(this.data); },
-	asCValue:     function () { return proto.parseCValue(this.data); },
-	asCStep:      function () { return proto.parseCStep(this.data); },
-	asTimeOfDay:  function () { return proto.parseTimeOfDay(this.data); },
-	asDate:       function () { return proto.parseDate(this.data); }
-};
 
 ///////////////////
 // Router client //
@@ -73,8 +48,12 @@ function Router(host, port) {
 		function (msg) {
 			if (!msg) return;
 
-			msg.__proto__ = MessagePrototype;
 			this.emit("message", msg);
+
+			if (msg.service == proto.LDataIndication)
+				this.emit("indication", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
+			else if (msg.service == proto.LDataConfirmation)
+				this.emit("confirmation", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
 		}.bind(this)
 	);
 
@@ -98,8 +77,23 @@ function Router(host, port) {
 
 Router.prototype.__proto__ = EventEmitter.prototype;
 
+Router.prototype.send = function (cemi) {
+	if (this.ext) return proto.sendRouter(this.ext, cemi);
+};
+
 Router.prototype.write = function (src, dest, payload) {
-	if (this.ext) return proto.writeRouter(this.ext, src, dest, payload);
+	return this.send({
+		service: proto.LDataIndication,
+		payload: {
+			source: src,
+			destination: dest,
+			tpdu: {
+				tpci: proto.UnnumberedData,
+				apci: proto.GroupValueWrite,
+				payload: payload
+			}
+		}
+	});
 };
 
 Router.prototype.dispose = function () {
@@ -127,8 +121,12 @@ function Tunnel(host, port) {
 		function (msg) {
 			if (!msg) return;
 
-			msg.__proto__ = MessagePrototype;
 			this.emit("message", msg);
+
+			if (msg.service == proto.LDataIndication)
+				this.emit("indication", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
+			else if (msg.service == proto.LDataConfirmation)
+				this.emit("confirmation", msg.payload.source, msg.payload.destination, msg.payload.tpdu);
 		}.bind(this),
 
 		this.emit.bind(this, "ack")
@@ -162,8 +160,23 @@ Tunnel.prototype.dispose = function () {
 	this.sock.close();
 };
 
-Tunnel.prototype.write = function (src, dest, payload, ack) {
-	if (this.ext) return proto.writeTunnel(this.ext, src, dest, payload, !!ack);
+Tunnel.prototype.send = function (cemi) {
+	if (this.ext) return proto.sendTunnel(this.ext, cemi);
+}
+
+Tunnel.prototype.write = function (src, dest, payload) {
+	return this.send({
+		service: proto.LDataRequest,
+		payload: {
+			source: src,
+			destination: dest,
+			tpdu: {
+				tpci: proto.UnnumberedData,
+				apci: proto.GroupValueWrite,
+				payload: payload
+			}
+		}
+	});
 };
 
 /////////////
@@ -171,27 +184,73 @@ Tunnel.prototype.write = function (src, dest, payload, ack) {
 /////////////
 
 module.exports = {
-	Router:                  Router,
-	Tunnel:                  Tunnel,
-	formatIndividualAddress: formatIndividualAddress,
-	formatGroupAddress:      formatGroupAddress,
-	IndividualAddress:       makeIndividualAddress,
-	GroupAddress:            makeGroupAddress,
-	Unsigned8:               proto.makeUnsigned8,
-	Unsigned16:              proto.makeUnsigned16,
-	Unsigned32:              proto.makeUnsigned32,
-	Signed8:                 proto.makeSigned8,
-	Signed16:                proto.makeSigned16,
-	Signed32:                proto.makeSigned32,
-	Float16:                 proto.makeFloat16,
-	Float32:                 proto.makeFloat32,
-	Bool:                    proto.makeBool,
-	Char:                    proto.makeChar,
-	CValue:                  proto.makeCValue,
-	CStep:                   proto.makeCStep,
-	TimeOfDay:               proto.makeTimeOfDay,
-	Date:                    proto.makeDate,
-	LDataRequest:            proto.LDataRequest,
-	LDataConfirmation:       proto.LDataConfirmation,
-	LDataIndication:         proto.LDataIndication,
+	// Clients
+	Router:                 Router,
+	Tunnel:                 Tunnel,
+
+	// Address
+	packIndividual:         packIndividual,
+	packGroup:              packGroup,
+
+	unpackIndividual:       unpackIndividual,
+	unpackGroup:            unpackGroup,
+
+	// Data types
+	unpackUnsigned8:        proto.unpackUnsigned8,
+	unpackUnsigned16:       proto.unpackUnsigned16,
+	unpackUnsigned32:       proto.unpackUnsigned32,
+	unpackSigned8:          proto.unpackSigned8,
+	unpackSigned16:         proto.unpackSigned16,
+	unpackSigned32:         proto.unpackSigned32,
+	unpackFloat16:          proto.unpackFloat16,
+	unpackFloat32:          proto.unpackFloat32,
+	unpackBool:             proto.unpackBool,
+	unpackChar:             proto.unpackChar,
+	unpackCValue:           proto.unpackCValue,
+	unpackCStep:            proto.unpackCStep,
+	unpackTimeOfDay:        proto.unpackTimeOfDay,
+	unpackDate:             proto.unpackDate,
+
+	packUnsigned8:          proto.packUnsigned8,
+	packUnsigned16:         proto.packUnsigned16,
+	packUnsigned32:         proto.packUnsigned32,
+	packSigned8:            proto.packSigned8,
+	packSigned16:           proto.packSigned16,
+	packSigned32:           proto.packSigned32,
+	packFloat16:            proto.packFloat16,
+	packFloat32:            proto.packFloat32,
+	packBool:               proto.packBool,
+	packChar:               proto.packChar,
+	packCValue:             proto.packCValue,
+	packCStep:              proto.packCStep,
+	packTimeOfDay:          proto.packTimeOfDay,
+	packDate:               proto.packDate,
+
+	// CEMI Constants
+	LDataRequest:           proto.LDataRequest,
+	LDataConfirmation:      proto.LDataConfirmation,
+	LDataIndication:        proto.LDataIndication,
+
+	// L_Data constants
+	NumberedData:           proto.NumberedData,
+	UnnumberedData:         proto.UnnumberedData,
+	NumberedControl:        proto.NumberedControl,
+	UnnumberedControl:      proto.UnnumberedControl,
+
+	GroupValueRead:         proto.GroupValueRead,
+	GroupValueResponse:     proto.GroupValueResponse,
+	GroupValueWrite:        proto.GroupValueWrite,
+	IndividualAddrWrite:    proto.IndividualAddrWrite,
+	IndividualAddrRequest:  proto.IndividualAddrRequest,
+	IndividualAddrResponse: proto.IndividualAddrResponse,
+	ADCRead:                proto.ADCRead,
+	ADCResponse:            proto.ADCResponse,
+	MemoryRead:             proto.MemoryRead,
+	MemoryResponse:         proto.MemoryResponse,
+	MemoryWrite:            proto.MemoryWrite,
+	UserMessage:            proto.UserMessage,
+	MaskVersionRead:        proto.MaskVersionRead,
+	MaskVersionResponse:    proto.MaskVersionResponse,
+	Restart:                proto.Restart,
+	Escape:                 proto.Escape
 };
